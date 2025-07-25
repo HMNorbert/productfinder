@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Terméknév kereső</title>
+  <link rel="icon" href="logoikon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e9f0f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-width: 420px;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #34495e;
+    }
+
+    input {
+      width: 93%;
+      padding: 0.6rem 0.8rem;
+      margin-top: 0.4rem;
+      border: 1px solid #cbd6e2;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border 0.3s;
+    }
+
+    input:focus {
+      border-color: #3498db;
+      outline: none;
+      box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
+    }
+
+    .result {
+      margin-top: 0.4rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #2c3e50;
+      text-align: center;
+      background: #f0f8ff;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      padding: 1rem;
+      white-space: pre-line;
+      max-height: 500px;
+      overflow: auto;
+    }
+
+    .result ul {
+      padding-left: 1.2em;
+      text-align: left;
+      margin: 0;
+    }
+
+    .result li {
+      margin-bottom: 0.3rem;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <label for="cikkszam">Cikkszám:</label>
+    <input type="text" id="cikkszam" placeholder="Pl. AZI-WK35XA">
+    <label for="cikkszam">Termék neve:</label>
+    <div class="result" id="eredmeny"></div>
+  </div>
+
+  <script src="adatbazis.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
