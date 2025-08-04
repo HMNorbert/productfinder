@@ -1,36 +1,23 @@
 const cikkszamInput = document.getElementById("cikkszam");
-const tablaBody = document.getElementById("tabla-body");
+const eredmenyDiv = document.getElementById("eredmeny");
 
 cikkszamInput.addEventListener("input", () => {
   const keresett = cikkszamInput.value.trim().toLowerCase();
-  tablaBody.innerHTML = "";
+  eredmenyDiv.innerHTML = "";
 
   if (!keresett) return;
 
-  let talalatok = 0;
+  const talalatok = [];
 
   for (const [cikkszam, adat] of Object.entries(adatbazis)) {
     if (cikkszam.toLowerCase().includes(keresett)) {
-      const sor = document.createElement("tr");
-      const cellaCikkszam = document.createElement("td");
-      const cellaNev = document.createElement("td");
-
-      cellaCikkszam.textContent = cikkszam;
-      cellaNev.textContent = adat.termek;
-
-      sor.appendChild(cellaCikkszam);
-      sor.appendChild(cellaNev);
-      tablaBody.appendChild(sor);
-      talalatok++;
+      talalatok.push(`<li><strong>${cikkszam}</strong>: ${adat.termek}</li>`);
     }
   }
 
-  if (talalatok === 0) {
-    const sor = document.createElement("tr");
-    const uzenet = document.createElement("td");
-    uzenet.colSpan = 2;
-    uzenet.textContent = "Nem található termék ezzel a cikkszám részlettel.";
-    sor.appendChild(uzenet);
-    tablaBody.appendChild(sor);
+  if (talalatok.length > 0) {
+    eredmenyDiv.innerHTML = `<ul>${talalatok.join("")}</ul>`;
+  } else {
+    eredmenyDiv.innerText = "Nem található termék ezzel a cikkszám részlettel.";
   }
 });
