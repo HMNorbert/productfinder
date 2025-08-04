@@ -8,24 +8,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #e9f0f7;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 1rem;
     }
 
     .container {
       background: #ffffff;
-      padding: 2rem;
+      padding: 1.5rem;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      max-width: 420px;
+      max-width: 480px;
       width: 100%;
-      transition: all 0.3s ease;
     }
 
     label {
@@ -36,7 +40,7 @@
     }
 
     input {
-      width: 93%;
+      width: 100%;
       padding: 0.6rem 0.8rem;
       margin-top: 0.4rem;
       border: 1px solid #cbd6e2;
@@ -52,8 +56,8 @@
     }
 
     .result {
-      margin-top: 0.4rem;
-      font-size: 1.1rem;
+      margin-top: 1rem;
+      font-size: 1rem;
       font-weight: 500;
       color: #2c3e50;
       text-align: center;
@@ -62,8 +66,8 @@
       border-radius: 8px;
       padding: 1rem;
       white-space: pre-line;
-      max-height: 500px;
-      overflow: auto;
+      max-height: 400px;
+      overflow-y: auto;
     }
 
     .result ul {
@@ -75,6 +79,20 @@
     .result li {
       margin-bottom: 0.3rem;
       line-height: 1.4;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+      }
+
+      input {
+        font-size: 1rem;
+      }
+
+      .result {
+        font-size: 0.95rem;
+      }
     }
   </style>
 </head>
