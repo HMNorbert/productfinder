@@ -560,9 +560,9 @@ const adatbazis = {
 "116.014.21.1": { termek: "Geberit Tango pneumatikus vizelde vezérlés (Fényes Króm)" },
 "116.014.46.1": { termek: "Geberit Tango pneumatikus vizelde vezérlés (Matt Króm)" },
 "116.015.KH.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (fényes króm / matt króm / fényes króm)" },
-"116.015.KJ.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / fényes króm / fehér)" },"
+"116.015.KJ.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / fényes króm / fehér)" },
 "116.015.KK.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (fehér / aranyozott / fehér)" },
-"116.015.KL.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / matt króm / matt króm)" },"
+"116.015.KL.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / matt króm / matt króm)" },
 "116.015.KM.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (fekete / fényes króm / fekete)" },
 "116.015.KN.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (matt króm / fényes króm / matt króm)" },
 "116.016.11.5": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (alpin fehér)" },
@@ -3907,7 +3907,7 @@ const adatbazis = {
 "AR09TXFYAWKNEU/XEU": { termek: "Samsung Cebu AR09TXFYAWKNEU/XEU oldalfali split klíma csomag 2,5 kW" },
 "AR09TXFYBWKXEE": { termek: "Samsung Nordic Geo AR09TXFYBWKXEE 2,5 Kw Single kültéri egység" },
 "AR09TXHQASINEU/XEU": { termek: "Samsung AR35 AR09TXHQASINEU/XEU oldalfali split klíma csomag 2,5 kW" },
-"AR12TXCACWKXEE": { termek: "Samsung Nordic WindFree™ Geo 3,5 kW	 Single kültéri egység" },"
+"AR12TXCACWKXEE": { termek: "Samsung Nordic WindFree™ Geo 3,5 kW	 Single kültéri egység" },
 "AR12TXEAAWKNEU/XEU": { termek: "Samsung Wind-Free Avant AR12TXEAAWKNEU/XEU oldalfali split klíma csomag 3,5 kW" },
 "AR12TXFYAWKNEU/XEU": { termek: "Samsung Cebu AR12TXFYAWKNEU/XEU oldalfali split klíma csomag 3,5 kW" },
 "AR12TXFYBWKXEE": { termek: "Samsung Nordic Geo AR12TXFYBWKXEE 3,5 kw Single kültéri egység" },
