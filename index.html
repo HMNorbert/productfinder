@@ -2,255 +2,124 @@
 <html lang="hu">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0ea5e9" />
+  <meta charset="UTF-8">
   <title>Terméknév kereső</title>
-  <link rel="icon" href="logoikon.png" type="image/png" />
+  <link rel="icon" href="logoikon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    :root {
-      --bg: #f6f9fc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
-      --accent: #0ea5e9;
-      --accent-2: #38bdf8;
-      --border: #e2e8f0;
-      --ring: 0 0 0 4px rgba(14, 165, 233, .22);
-      --shadow-1: 0 6px 24px rgba(2, 6, 23, .08);
-      --shadow-2: 0 10px 30px rgba(2, 6, 23, .12);
-    }
-
     * {
-      box-sizing: border-box
-    }
-
-    html,
-    body {
-      height: 100%
+      box-sizing: border-box;
     }
 
     body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
-      line-height: 1.45;
-      color: var(--text);
-      background:
-        radial-gradient(50% 35% at 20% 10%, rgba(14, 165, 233, .15), transparent 60%),
-        radial-gradient(40% 30% at 80% 0%, rgba(99, 102, 241, .12), transparent 60%),
-        radial-gradient(40% 30% at 10% 80%, rgba(20, 184, 166, .12), transparent 60%),
-        var(--bg);
-      min-height: 100vh;
-      background-repeat: no-repeat;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e9f0f7;
       display: flex;
-      align-items: flex-start;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
     }
 
     .container {
-      width: min(1100px, 92vw);
-      margin: 2rem auto;
-      display: grid;
-      gap: 1rem;
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
     }
 
-    .search-card,
-    .result-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1rem;
-      animation: fadeIn .4s ease both;
-    }
-
-    .elevation-1 {
-      box-shadow: var(--shadow-1);
-    }
-
-    .elevation-2 {
-      box-shadow: var(--shadow-2);
-    }
-
-    .search-label {
-      font-weight: 600;
+    label {
       display: block;
-      margin-bottom: .5rem;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #34495e;
     }
 
-    .search-wrap {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      background: linear-gradient(180deg, rgba(2, 6, 23, .03), transparent);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: .5rem .5rem .5rem .6rem;
-      transition: border .2s ease, box-shadow .2s ease, transform .06s ease, background .2s ease;
-    }
-
-    .search-wrap:focus-within {
-      box-shadow: var(--ring);
-      transform: translateY(-1px);
-      border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
-    }
-
-    .search-icon {
-      opacity: .7;
-      display: grid;
-      place-items: center;
-      flex: 0 0 auto;
-    }
-
-    .search-input {
-      flex: 1;
-      background: transparent;
-      border: 0;
-      outline: 0;
+    input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      margin-top: 0.4rem;
+      border: 1px solid #cbd6e2;
+      border-radius: 6px;
       font-size: 1rem;
-      padding: .45rem;
-      color: var(--text);
+      transition: border 0.3s;
     }
 
-    .search-input::placeholder {
-      color: color-mix(in srgb, var(--muted) 70%, transparent);
+    input:focus {
+      border-color: #3498db;
+      outline: none;
+      box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
     }
 
-    .btn.icon {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: .4rem;
-      cursor: pointer;
-      transition: transform .1s ease, box-shadow .2s ease, background .15s ease;
+    .result {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      color: #2c3e50;
+      background: #f0f8ff;
+      border: 1px solid #dbeafe;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
     }
 
-    .btn.icon:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-1);
-      background: color-mix(in srgb, var(--accent) 12%, transparent);
-    }
-
-    .btn.icon:active {
-      transform: scale(.98);
-    }
-
-    .result-card {
-      padding: .5rem;
-    }
-
-    .table-scroll {
-      overflow: auto;
-      border-radius: 12px;
-    }
-
-    .table {
+    table {
       width: 100%;
       border-collapse: collapse;
-      font-size: .98rem;
     }
 
-    .table thead th {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      background: linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, transparent), var(--card));
+    th,
+    td {
       text-align: left;
-      padding: .75rem .75rem;
-      border-bottom: 1px solid var(--border);
-      font-weight: 700;
+      padding: 0.5rem;
+      border-bottom: 1px solid #ccc;
     }
 
-    .table tbody td {
-      padding: .65rem .75rem;
-      border-bottom: 1px solid var(--border);
+    th {
+      background-color: #e0ecf9;
     }
 
-    .table tbody tr {
-      transition: background .15s ease, transform .06s ease;
-    }
-
-    .table tbody tr:hover {
-      background: color-mix(in srgb, var(--accent) 8%, transparent);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 2rem 1rem;
-      color: var(--muted);
-    }
-
-    .empty-state .empty-illustration {
-      font-size: 2rem;
-      margin-bottom: .25rem;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(6px)
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+        width: 95%;
       }
 
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    .fade-in-up {
-      animation: fadeIn .35s ease both;
-    }
-
-    @media (max-width: 560px) {
-      .search-input {
+      input {
         font-size: 1rem;
       }
 
-      .table thead th,
-      .table tbody td {
-        padding: .6rem .6rem;
+      .result {
+        font-size: 0.95rem;
       }
     }
   </style>
 </head>
 
 <body>
-  <main class="container">
-    <section class="search-card elevation-1" id="kereso">
-      <label for="cikkszam" class="search-label">Cikkszám</label>
-      <div class="search-wrap">
-        <span class="search-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="20" height="20">
-            <path d="M10 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zm11 19-5.1-5.1" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-          </svg>
-        </span>
-        <input id="cikkszam" class="search-input" type="text" placeholder="Pl. AZI-WK35XA" autocomplete="off" />
-        <button id="clearBtn" class="btn icon" aria-label="Mező törlése" title="Mező törlése">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </section>
+  <div class="container">
+    <label for="cikkszam">Cikkszám:</label>
+    <input type="text" id="cikkszam" placeholder="Pl. AZI-WK35XA">
 
-    <section class="result-card elevation-1">
-      <div class="table-scroll">
-        <table class="table" role="grid">
-          <thead>
-            <tr>
-              <th scope="col">Cikkszám</th>
-              <th scope="col">Terméknév</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-body"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+    <div class="result">
+      <table>
+        <thead>
+          <tr>
+            <th>Cikkszám</th>
+            <th>Terméknév</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body">
+        </tbody>
+      </table>
+    </div>
+  </div>
 
   <script src="adatbazis.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
