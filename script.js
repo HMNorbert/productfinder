@@ -1,71 +1,109 @@
-const input = document.getElementById("cikkszam");
-const clearBtn = document.getElementById("clearBtn");
-const tbody = document.getElementById("tabla-body");
+// Egyszerű, mobilbarát kereső régi Safarira is
+var input = document.getElementById("cikkszam");
+var clearBtn = document.getElementById("clearBtn");
+var tbody = document.getElementById("tabla-body");
 
-input.value = localStorage.getItem("q") || "";
-setTimeout(() => input?.focus?.({ preventScroll: true }), 150);
+// localStorage olvasás biztonságosan
+try {
+  input.value = window.localStorage ? (localStorage.getItem("q") || "") : "";
+} catch (e) {
+  input.value = "";
+}
 
-const debounce = (fn, ms=120) => {
-  let t;
-  return (...args) => {
+// Fókusz (ha támogatott)
+setTimeout(function(){ try { if (input && input.focus) input.focus(); } catch(e){} }, 150);
+
+// Debounce ES5
+function debounce(fn, ms){
+  var t;
+  return function(){
+    var args = arguments;
     clearTimeout(t);
-    t = setTimeout(() => fn(...args), ms);
+    t = setTimeout(function(){ fn.apply(null, args); }, ms);
   };
-};
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(m){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#039;'}[m];
+  });
+}
 
 function highlight(text, query){
   if (!query) return escapeHtml(text);
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  var lower = String(text).toLowerCase();
+  var q = String(query).toLowerCase();
+  var idx = lower.indexOf(q);
   if (idx === -1) return escapeHtml(text);
-  const before = escapeHtml(text.slice(0, idx));
-  const match  = escapeHtml(text.slice(idx, idx + query.length));
-  const after  = escapeHtml(text.slice(idx + query.length));
-  return `${before}<mark>${match}</mark>${after}`;
-}
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#039;'}[m]));
+  var before = escapeHtml(text.slice(0, idx));
+  var match  = escapeHtml(text.slice(idx, idx + query.length));
+  var after  = escapeHtml(text.slice(idx + query.length));
+  return before + "<mark>" + match + "</mark>" + after;
 }
 
 function renderRows(rows, q){
   tbody.innerHTML = "";
-  const frag = document.createDocumentFragment();
+  var frag = document.createDocumentFragment();
 
-  rows.forEach(({ cikkszam, termek }) => {
-    const tr = document.createElement("tr");
+  for (var i=0; i<rows.length; i++){
+    var r = rows[i];
+    var tr = document.createElement("tr");
     tr.className = "fade-in-up";
 
-    const tdCode = document.createElement("td");
-    tdCode.innerHTML = highlight(cikkszam, q);
+    var tdCode = document.createElement("td");
+    tdCode.innerHTML = highlight(r.cikkszam, q);
 
-    const tdName = document.createElement("td");
-    tdName.textContent = termek;
+    var tdName = document.createElement("td");
+    tdName.textContent = r.termek;
 
-    tr.append(tdCode, tdName);
+    tr.appendChild(tdCode);
+    tr.appendChild(tdName);
     frag.appendChild(tr);
-  });
-
+  }
   tbody.appendChild(frag);
 }
 
 function doSearch(){
-  const q = input.value.trim();
-  localStorage.setItem("q", q);
+  var q = (input.value || "").trim();
+
+  // localStorage írás biztonságosan
+  try { if (window.localStorage) localStorage.setItem("q", q); } catch(e){}
+
   tbody.innerHTML = "";
 
-  if (!q || typeof adatbazis !== "object") return;
+  // Üres bevitelnél ne mutassunk semmit
+  if (!q) return;
 
-  const rows = [];
-  for (const [code, adat] of Object.entries(adatbazis)){
-    if (code.toLowerCase().includes(q.toLowerCase())){
-      rows.push({ cikkszam: code, termek: String(adat.termek ?? "") });
+  // adatbazis globálé ellenőrzése
+  if (typeof window.adatbazis !== "object" || !window.adatbazis){
+    // Ha ide ér, valószínű rossz betöltési sorrend vagy 404 az adatbazis.js
+    return;
+  }
+
+  var rows = [];
+  var code, adat, name;
+  for (code in window.adatbazis){
+    if (!window.adatbazis.hasOwnProperty(code)) continue;
+    if (String(code).toLowerCase().indexOf(q.toLowerCase()) !== -1){
+      adat = window.adatbazis[code] || {};
+      name = (typeof adat.termek === "string") ? adat.termek : String(adat.termek || "");
+      rows.push({ cikkszam: code, termek: name });
     }
   }
 
-  if (rows.length > 0) renderRows(rows, q);
+  if (rows.length > 0){
+    renderRows(rows, q);
+  } // külön üres állapot nincs, ahogy kérted
 }
 
-const onInput = debounce(doSearch, 80);
-input.addEventListener("input", onInput);
-clearBtn.addEventListener("click", () => { input.value = ""; input.focus(); doSearch(); });
+var onInput = debounce(doSearch, 120);
+input.addEventListener("input", onInput, false);
+clearBtn.addEventListener("click", function(){
+  input.value = "";
+  try { if (window.localStorage) localStorage.setItem("q", ""); } catch(e){}
+  if (input && input.focus) input.focus();
+  doSearch();
+}, false);
 
+// Induló keresés az előző értékkel
 doSearch();
