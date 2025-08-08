@@ -1,73 +1,71 @@
-const themeBtn = document.getElementById('themeBtn');
-const saved = localStorage.getItem('theme');
-if (saved === 'dark' || (saved == null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-  document.body.classList.add('dark');
-  themeBtn.setAttribute('aria-pressed', 'true');
+const input = document.getElementById("cikkszam");
+const clearBtn = document.getElementById("clearBtn");
+const tbody = document.getElementById("tabla-body");
+
+input.value = localStorage.getItem("q") || "";
+setTimeout(() => input?.focus?.({ preventScroll: true }), 150);
+
+const debounce = (fn, ms=120) => {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+};
+
+function highlight(text, query){
+  if (!query) return escapeHtml(text);
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  const before = escapeHtml(text.slice(0, idx));
+  const match  = escapeHtml(text.slice(idx, idx + query.length));
+  const after  = escapeHtml(text.slice(idx + query.length));
+  return `${before}<mark>${match}</mark>${after}`;
 }
-themeBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  const isDark = document.body.classList.contains('dark');
-  themeBtn.setAttribute('aria-pressed', String(isDark));
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-});
-
-const cikkszamInput = document.getElementById('cikkszam');
-const tablaBody = document.getElementById('tabla-body');
-const clearBtn = document.getElementById('clearBtn');
-const counter = document.getElementById('counter');
-
-function debounce(fn, delay = 120) {
-  let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn.apply(null, args), delay); };
-}
-
-function highlight(text, query) {
-  if (!query) return text;
-  const esc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return text.replace(new RegExp(esc, 'gi'), (m) => `<mark>${m}</mark>`);
-}
-
-function setEmpty(message) {
-  tablaBody.innerHTML = `<tr class="empty"><td colspan="2">${message}</td></tr>`;
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#039;'}[m]));
 }
 
-function updateCounter(n) {
-  counter.textContent = `${n} találat`;
+function renderRows(rows, q){
+  tbody.innerHTML = "";
+  const frag = document.createDocumentFragment();
+
+  rows.forEach(({ cikkszam, termek }) => {
+    const tr = document.createElement("tr");
+    tr.className = "fade-in-up";
+
+    const tdCode = document.createElement("td");
+    tdCode.innerHTML = highlight(cikkszam, q);
+
+    const tdName = document.createElement("td");
+    tdName.textContent = termek;
+
+    tr.append(tdCode, tdName);
+    frag.appendChild(tr);
+  });
+
+  tbody.appendChild(frag);
 }
 
-const runSearch = debounce(() => {
-  const q = cikkszamInput.value.trim();
-  tablaBody.innerHTML = '';
-  if (q.length < 2) { setEmpty('Kezdésként írj be legalább 2 karaktert ⌨️'); updateCounter(0); return; }
+function doSearch(){
+  const q = input.value.trim();
+  localStorage.setItem("q", q);
+  tbody.innerHTML = "";
 
-  const qLower = q.toLowerCase();
-  let count = 0;
+  if (!q || typeof adatbazis !== "object") return;
 
-  for (const [cikkszam, adat] of Object.entries(window.adatbazis || {})) {
-    if (String(cikkszam).toLowerCase().includes(qLower)) {
-      const tr = document.createElement('tr');
-      const tdC = document.createElement('td');
-      const tdN = document.createElement('td');
-      tdC.innerHTML = highlight(cikkszam, q);
-      tdN.innerHTML = highlight(adat.termek || '', q);
-      tr.appendChild(tdC); tr.appendChild(tdN);
-      tablaBody.appendChild(tr);
-      count++;
+  const rows = [];
+  for (const [code, adat] of Object.entries(adatbazis)){
+    if (code.toLowerCase().includes(q.toLowerCase())){
+      rows.push({ cikkszam: code, termek: String(adat.termek ?? "") });
     }
   }
 
-  if (count === 0) { setEmpty('Nincs találat erre a részletre 🤷'); }
-  updateCounter(count);
-}, 120);
+  if (rows.length > 0) renderRows(rows, q);
+}
 
-cikkszamInput.addEventListener('input', runSearch);
+const onInput = debounce(doSearch, 80);
+input.addEventListener("input", onInput);
+clearBtn.addEventListener("click", () => { input.value = ""; input.focus(); doSearch(); });
 
-clearBtn.addEventListener('click', () => {
-  cikkszamInput.value = '';
-  cikkszamInput.focus();
-  setEmpty('Kezdésként írj be legalább 2 karaktert ⌨️');
-  updateCounter(0);
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => cikkszamInput.focus({ preventScroll: true }), 100);
-});
+doSearch();
