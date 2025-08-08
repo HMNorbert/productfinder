@@ -1,182 +1,254 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Terméknév kereső — modern</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>Terméknév kereső</title>
   <link rel="icon" href="logoikon.png" type="image/png" />
   <style>
     :root {
-      --bg: #eef3f9;
+      --bg: #f6f9fc;
       --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --primary-50: #dbeafe;
-      --ring: 0 0 0 6px rgba(37, 99, 235, 0.12);
-      --shadow-sm: 0 2px 8px rgba(0,0,0,.06);
-      --shadow-md: 0 8px 30px rgba(0,0,0,.12);
-      --radius: 14px;
-    }
-    .dark {
-      --bg: #0b1220;
-      --card: #0f172a;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --primary: #60a5fa;
-      --primary-50: rgba(96,165,250,.18);
-      --ring: 0 0 0 6px rgba(96, 165, 250, 0.18);
-      --shadow-sm: 0 3px 10px rgba(0,0,0,.35);
-      --shadow-md: 0 12px 40px rgba(0,0,0,.5);
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #0ea5e9;
+      --accent-2: #38bdf8;
+      --border: #e2e8f0;
+      --ring: 0 0 0 4px rgba(14, 165, 233, .22);
+      --shadow-1: 0 6px 24px rgba(2, 6, 23, .08);
+      --shadow-2: 0 10px 30px rgba(2, 6, 23, .12);
     }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 10% -10%, var(--primary-50), transparent 60%),
-                  radial-gradient(900px 600px at 110% 10%, var(--primary-50), transparent 60%),
-                  var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      line-height: 1.45;
       color: var(--text);
+      background:
+        radial-gradient(50% 35% at 20% 10%, rgba(14, 165, 233, .15), transparent 60%),
+        radial-gradient(40% 30% at 80% 0%, rgba(99, 102, 241, .12), transparent 60%),
+        radial-gradient(40% 30% at 10% 80%, rgba(20, 184, 166, .12), transparent 60%),
+        var(--bg);
+      min-height: 100vh;
+      background-repeat: no-repeat;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .container {
+      width: min(1100px, 92vw);
+      margin: 2rem auto;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .search-card,
+    .result-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem;
+      animation: fadeIn .4s ease both;
+    }
+
+    .elevation-1 {
+      box-shadow: var(--shadow-1);
+    }
+
+    .elevation-2 {
+      box-shadow: var(--shadow-2);
+    }
+
+    .search-label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: .5rem;
+    }
+
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: linear-gradient(180deg, rgba(2, 6, 23, .03), transparent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .5rem .5rem .5rem .6rem;
+      transition: border .2s ease, box-shadow .2s ease, transform .06s ease, background .2s ease;
+    }
+
+    .search-wrap:focus-within {
+      box-shadow: var(--ring);
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+    }
+
+    .search-icon {
+      opacity: .7;
       display: grid;
       place-items: center;
-      padding: 24px;
+      flex: 0 0 auto;
     }
 
-    .card {
-      width: min(860px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.35)) padding-box,
-                  linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.35)) border-box;
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      padding: clamp(18px, 3.2vw, 28px);
-      animation: floatIn .6s cubic-bezier(.22,.88,.3,1.1) both;
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      font-size: 1rem;
+      padding: .45rem;
+      color: var(--text);
     }
 
-    @keyframes floatIn {
-      from { opacity: 0; transform: translateY(12px) scale(.98); filter: blur(4px); }
-      to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    .search-input::placeholder {
+      color: color-mix(in srgb, var(--muted) 70%, transparent);
     }
 
-    .header {
-      display: flex; align-items: center; gap: 12px; justify-content: space-between; margin-bottom: 14px;
-    }
-    .title {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .logo {
-      width: 32px; height: 32px; border-radius: 8px; box-shadow: var(--shadow-sm);
-    }
-    h1 { font-size: clamp(18px, 3vw, 24px); margin: 0; letter-spacing: .2px; }
-    .muted { color: var(--muted); font-size: 13px; }
-
-    .toolbar { display:flex; align-items:center; gap:10px; }
-    .btn {
-      appearance: none; border: 0; border-radius: 999px; padding: 8px 12px; cursor: pointer;
-      box-shadow: var(--shadow-sm); font-weight: 600; font-size: 13px; color: var(--text);
-      background: rgba(0,0,0,.04); transition: transform .08s ease, box-shadow .2s ease, background .2s;
-    }
-    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-    .btn:active { transform: translateY(0); }
-
-    .search {
-      position: relative; margin-top: 10px;
-    }
-    .input {
-      width: 100%; border: 1px solid rgba(0,0,0,.08);
-      background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.72));
-      background: var(--card);
-      padding: 14px 44px 14px 44px; border-radius: 12px; font-size: 16px;
-      outline: none; color: var(--text);
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow .2s ease, transform .06s ease, border-color .2s ease;
-    }
-    .input:focus { box-shadow: var(--shadow-md), var(--ring); border-color: var(--primary); }
-    .search .icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: .6; }
-    .search .clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
-
-    .chip {
-      display:inline-flex; align-items:center; gap:8px; margin-top: 10px; padding: 6px 10px; border-radius: 999px;
-      background: var(--primary-50); color: var(--text); font-size: 12px; font-weight: 600; box-shadow: var(--shadow-sm);
-      transform: translateZ(0);
+    .btn.icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .4rem;
+      cursor: pointer;
+      transition: transform .1s ease, box-shadow .2s ease, background .15s ease;
     }
 
-    .result {
-      margin-top: 16px; overflow: hidden; border-radius: 12px; box-shadow: var(--shadow-sm);
-      border: 1px solid rgba(0,0,0,.06);
-      animation: fadeIn .25s ease both;
+    .btn.icon:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-1);
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
     }
-    @keyframes fadeIn { from {opacity:0} to{opacity:1} }
 
-    table { width: 100%; border-collapse: separate; border-spacing: 0; }
-    thead th {
-      position: sticky; top: 0; z-index: 1; background: linear-gradient(180deg, rgba(0,0,0,.02), transparent);
-      text-align: left; font-size: 13px; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,.08);
-      backdrop-filter: saturate(1.2) blur(6px);
+    .btn.icon:active {
+      transform: scale(.98);
     }
-    tbody td { padding: 12px 14px; border-bottom: 1px solid rgba(0,0,0,.06); }
-    tbody tr { transition: background .15s ease, transform .06s ease, box-shadow .15s ease; }
-    tbody tr:hover { background: rgba(0,0,0,.03); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
 
-    mark { background: var(--primary-50); padding: 0 2px; border-radius: 4px; }
-
-    .empty {
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding: 28px; text-align:center; color: var(--muted);
-      animation: pop .25s ease both;
+    .result-card {
+      padding: .5rem;
     }
-    @keyframes pop { from { opacity:0; transform: scale(.98) } to { opacity:1; transform: scale(1) } }
 
-    .footer { margin-top: 8px; display:flex; justify-content: space-between; align-items: center; }
+    .table-scroll {
+      overflow: auto;
+      border-radius: 12px;
+    }
 
-    /* Kis képernyők */
-    @media (max-width: 520px) {
-      .toolbar { gap:6px }
-      .btn { padding: 8px 10px }
-      thead th { font-size: 12px }
-      tbody td { font-size: 14px }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .98rem;
+    }
+
+    .table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, transparent), var(--card));
+      text-align: left;
+      padding: .75rem .75rem;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+    }
+
+    .table tbody td {
+      padding: .65rem .75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table tbody tr {
+      transition: background .15s ease, transform .06s ease;
+    }
+
+    .table tbody tr:hover {
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+    }
+
+    .empty-state .empty-illustration {
+      font-size: 2rem;
+      margin-bottom: .25rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .fade-in-up {
+      animation: fadeIn .35s ease both;
+    }
+
+    @media (max-width: 560px) {
+      .search-input {
+        font-size: 1rem;
+      }
+
+      .table thead th,
+      .table tbody td {
+        padding: .6rem .6rem;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div class="card" role="application">
-    <div class="header">
-      <div class="title">
-        <h1>Terméknév kereső</h1>
+  <main class="container">
+    <section class="search-card elevation-1" id="kereso">
+      <label for="cikkszam" class="search-label">Cikkszám</label>
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path d="M10 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16zm11 19-5.1-5.1" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <input id="cikkszam" class="search-input" type="text" placeholder="Pl. AZI-WK35XA" autocomplete="off" />
+        <button id="clearBtn" class="btn icon" aria-label="Mező törlése" title="Mező törlése">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
-      <div class="toolbar">
-        <button id="themeBtn" class="btn" aria-pressed="false" title="Téma váltása">🌙 Mód</button>
+    </section>
+
+    <section class="result-card elevation-1">
+      <div class="table-scroll">
+        <table class="table" role="grid">
+          <thead>
+            <tr>
+              <th scope="col">Cikkszám</th>
+              <th scope="col">Terméknév</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
       </div>
-    </div>
-
-    <div class="search">
-      <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        <circle cx="10.5" cy="10.5" r="7" stroke="currentColor" stroke-width="2" /></svg>
-      <input id="cikkszam" class="input" placeholder="Pl. AZI-WK35XA" autocomplete="off" />
-      <button id="clearBtn" class="btn clear" aria-label="Beviteli mező törlése">✕</button>
-    </div>
-
-    <div class="footer">
-      <div id="counter" class="chip" aria-live="polite">0 találat</div>
-      <div class="muted">Enter nélkül, azonnali keresés</div>
-    </div>
-
-    <div class="result" role="region" aria-live="polite">
-      <table>
-        <thead>
-          <tr>
-            <th style="width:34%">Cikkszám</th>
-            <th>Terméknév</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-body">
-          <tr class="empty"><td colspan="2">Kezdésként írj be legalább 2 karaktert ⌨️</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+    </section>
+  </main>
 
   <script src="adatbazis.js"></script>
   <script src="script.js"></script>
