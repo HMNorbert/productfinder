@@ -1,109 +1,36 @@
-// Egyszerű, mobilbarát kereső régi Safarira is
-var input = document.getElementById("cikkszam");
-var clearBtn = document.getElementById("clearBtn");
-var tbody = document.getElementById("tabla-body");
+const cikkszamInput = document.getElementById("cikkszam");
+const tablaBody = document.getElementById("tabla-body");
 
-// localStorage olvasás biztonságosan
-try {
-  input.value = window.localStorage ? (localStorage.getItem("q") || "") : "";
-} catch (e) {
-  input.value = "";
-}
+cikkszamInput.addEventListener("input", () => {
+  const keresett = cikkszamInput.value.trim().toLowerCase();
+  tablaBody.innerHTML = "";
 
-// Fókusz (ha támogatott)
-setTimeout(function(){ try { if (input && input.focus) input.focus(); } catch(e){} }, 150);
+  if (!keresett) return;
 
-// Debounce ES5
-function debounce(fn, ms){
-  var t;
-  return function(){
-    var args = arguments;
-    clearTimeout(t);
-    t = setTimeout(function(){ fn.apply(null, args); }, ms);
-  };
-}
+  let talalatok = 0;
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, function(m){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#039;'}[m];
-  });
-}
+  for (const [cikkszam, adat] of Object.entries(adatbazis)) {
+    if (cikkszam.toLowerCase().includes(keresett)) {
+      const sor = document.createElement("tr");
+      const cellaCikkszam = document.createElement("td");
+      const cellaNev = document.createElement("td");
 
-function highlight(text, query){
-  if (!query) return escapeHtml(text);
-  var lower = String(text).toLowerCase();
-  var q = String(query).toLowerCase();
-  var idx = lower.indexOf(q);
-  if (idx === -1) return escapeHtml(text);
-  var before = escapeHtml(text.slice(0, idx));
-  var match  = escapeHtml(text.slice(idx, idx + query.length));
-  var after  = escapeHtml(text.slice(idx + query.length));
-  return before + "<mark>" + match + "</mark>" + after;
-}
+      cellaCikkszam.textContent = cikkszam;
+      cellaNev.textContent = adat.termek;
 
-function renderRows(rows, q){
-  tbody.innerHTML = "";
-  var frag = document.createDocumentFragment();
-
-  for (var i=0; i<rows.length; i++){
-    var r = rows[i];
-    var tr = document.createElement("tr");
-    tr.className = "fade-in-up";
-
-    var tdCode = document.createElement("td");
-    tdCode.innerHTML = highlight(r.cikkszam, q);
-
-    var tdName = document.createElement("td");
-    tdName.textContent = r.termek;
-
-    tr.appendChild(tdCode);
-    tr.appendChild(tdName);
-    frag.appendChild(tr);
-  }
-  tbody.appendChild(frag);
-}
-
-function doSearch(){
-  var q = (input.value || "").trim();
-
-  // localStorage írás biztonságosan
-  try { if (window.localStorage) localStorage.setItem("q", q); } catch(e){}
-
-  tbody.innerHTML = "";
-
-  // Üres bevitelnél ne mutassunk semmit
-  if (!q) return;
-
-  // adatbazis globálé ellenőrzése
-  if (typeof window.adatbazis !== "object" || !window.adatbazis){
-    // Ha ide ér, valószínű rossz betöltési sorrend vagy 404 az adatbazis.js
-    return;
-  }
-
-  var rows = [];
-  var code, adat, name;
-  for (code in window.adatbazis){
-    if (!window.adatbazis.hasOwnProperty(code)) continue;
-    if (String(code).toLowerCase().indexOf(q.toLowerCase()) !== -1){
-      adat = window.adatbazis[code] || {};
-      name = (typeof adat.termek === "string") ? adat.termek : String(adat.termek || "");
-      rows.push({ cikkszam: code, termek: name });
+      sor.appendChild(cellaCikkszam);
+      sor.appendChild(cellaNev);
+      tablaBody.appendChild(sor);
+      talalatok++;
     }
   }
 
-  if (rows.length > 0){
-    renderRows(rows, q);
-  } // külön üres állapot nincs, ahogy kérted
-}
-
-var onInput = debounce(doSearch, 120);
-input.addEventListener("input", onInput, false);
-clearBtn.addEventListener("click", function(){
-  input.value = "";
-  try { if (window.localStorage) localStorage.setItem("q", ""); } catch(e){}
-  if (input && input.focus) input.focus();
-  doSearch();
-}, false);
-
-// Induló keresés az előző értékkel
-doSearch();
+  if (talalatok === 0) {
+    const sor = document.createElement("tr");
+    const uzenet = document.createElement("td");
+    uzenet.colSpan = 2;
+    uzenet.textContent = "Nem található termék ezzel a cikkszám részlettel.";
+    sor.appendChild(uzenet);
+    tablaBody.appendChild(sor);
+  }
+});
