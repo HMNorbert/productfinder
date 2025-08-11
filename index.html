@@ -8,62 +8,115 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
+    :root {
+      --bg: #f7f8fb;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-weak: #e6efff;
+      --border: #e5e7eb;
+      --ring: #93c5fd;
+      --radius: 12px;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .06);
+    }
+
     * {
-      box-sizing: border-box;
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #e9f0f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
       margin: 0;
-      padding: 1rem;
+      font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg), #fff);
     }
 
     .container {
-      background: #ffffff;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       max-width: 500px;
-      width: 100%;
+      margin: clamp(16px, 4vw, 48px) auto;
+      padding: clamp(16px, 3vw, 32px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0 0 .75rem 0;
+      letter-spacing: .2px;
+    }
+
+    p {
+      color: var(--muted)
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 20px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 700px) {
+      .filters {
+        grid-template-columns: 1fr
+      }
     }
 
     label {
+      font-size: .9rem;
+      color: var(--muted);
       display: block;
-      margin-top: 1rem;
-      font-weight: 600;
-      color: #34495e;
+      margin-bottom: 6px;
     }
 
-    input {
+    input[type="text"] {
       width: 100%;
-      padding: 0.6rem 0.8rem;
-      margin-top: 0.4rem;
-      border: 1px solid #cbd6e2;
-      border-radius: 6px;
-      font-size: 1rem;
-      transition: border 0.3s;
+      padding: 10px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    input::placeholder {
+      color: #9aa3af
     }
 
     input:focus {
-      border-color: #3498db;
       outline: none;
-      box-shadow: 0 0 3px rgba(52, 152, 219, 0.3);
+      border-color: var(--ring);
+      box-shadow: 0 0 0 4px rgba(147, 197, 253, .35);
     }
 
-    .result {
-      margin-top: 1.5rem;
-      font-size: 1rem;
-      color: #2c3e50;
-      background: #f0f8ff;
-      border: 1px solid #dbeafe;
-      border-radius: 8px;
-      padding: 1rem;
-      overflow-x: auto;
+    input:disabled {
+      background: #f3f4f6;
+      color: #9aa3af;
+      cursor: not-allowed;
+      border-style: dashed;
+    }
+
+    .table-wrap {
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: auto;
+      max-height: 600px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .table-scroll {
+      overflow: auto;
     }
 
     table {
@@ -71,29 +124,55 @@
       border-collapse: collapse;
     }
 
-    th,
-    td {
+    thead th {
       text-align: left;
-      padding: 0.5rem;
-      border-bottom: 1px solid #ccc;
+      font-size: .9rem;
+      font-weight: 700;
+      color: #374151;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 10px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
 
-    th {
-      background-color: #e0ecf9;
+    tbody td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fcfdff
+    }
+
+    tbody tr:hover {
+      background: #f3f7ff
+    }
+
+    td[colspan] {
+      text-align: center;
+      color: var(--muted);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation-duration: 0.01ms !important
+      }
     }
 
     @media (max-width: 480px) {
       .container {
-        padding: 1rem;
         width: 95%;
       }
 
-      input {
-        font-size: 1rem;
+      table {
+        font-size: 12px;
       }
 
-      .result {
-        font-size: 0.95rem;
+      .table-wrap {
+        max-height: 500px;
       }
     }
   </style>
@@ -101,21 +180,32 @@
 
 <body>
   <div class="container">
-    <label for="cikkszam">Cikkszám:</label>
-    <input type="text" id="cikkszam" placeholder="Pl. AZI-WK35XA">
+    <div class="filters">
+      <div>
+        <label for="cikkszam">Cikkszám</label>
+        <input type="text" id="cikkszam" placeholder="Pl. 013G0290">
+      </div>
 
-    <div class="result">
-      <table>
-        <thead>
-          <tr>
-            <th>Cikkszám</th>
-            <th>Terméknév</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-body">
-        </tbody>
-      </table>
+      <div>
+        <label for="termeknev">Terméknév</label>
+        <input type="text" id="termeknev" placeholder="Pl. Danfoss termosztátfej">
+      </div>
     </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="tabla">
+          <thead>
+            <tr>
+              <th>Cikkszám</th>
+              <th>Terméknév</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <script src="adatbazis.js"></script>
