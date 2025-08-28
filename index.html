@@ -15,9 +15,11 @@
       --muted: #6b7280;
       --primary: #2563eb;
       --primary-weak: #e6efff;
+      --primary-weak-2: #eef4ff;
       --border: #e5e7eb;
-      --ring: #93c5fd;
-      --radius: 12px;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
       --shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .06);
     }
 
@@ -34,41 +36,48 @@
       margin: 0;
       font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
       color: var(--text);
-      background: linear-gradient(180deg, var(--bg), #fff);
-      background-repeat: no-repeat;
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
+      background: radial-gradient(1200px 1200px at 10% -10%, #eef2ff 0, #fff 50%) fixed, var(--bg);
     }
 
     .container {
-      max-width: 800px;
-      margin: clamp(12px, 4vw, 48px) auto;
-      padding: clamp(12px, 3vw, 28px);
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 16px;
       box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      letter-spacing: .2px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
     }
 
     .filters {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px 20px;
-      margin-bottom: 12px;
-    }
-
-    @media (max-width:700px) {
-      .filters {
-        grid-template-columns: 1fr
-      }
+      gap: 14px 18px;
+      margin-top: 18px;
+      margin-bottom: 18px;
     }
 
     label {
-      font-size: .9rem;
-      color: var(--muted);
       display: block;
-      margin-bottom: 6px
+      font-size: 12px;
+      letter-spacing: .25px;
+      color: var(--muted);
+      margin-bottom: 6px;
     }
 
     input[type="text"] {
@@ -87,146 +96,160 @@
 
     input:focus {
       outline: none;
-      border-color: var(--ring);
-      box-shadow: 0 0 0 4px rgba(147, 197, 253, .35)
-    }
-
-    input:disabled {
-      background: #f3f4f6;
-      color: #9aa3af;
-      cursor: not-allowed;
-      border-style: dashed
+      border-color: #c7d2fe;
+      box-shadow: 0 0 0 3px #e0e7ff;
+      background: #fff;
     }
 
     .btn-row {
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 8px;
+      margin: 12px 0 4px;
       flex-wrap: wrap;
-      margin-top: 8px;
     }
 
     button {
-      appearance: none;
-      border: 1px solid var(--border);
-      background: #fff;
-      color: #111;
-      padding: 10px 14px;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      color: #fff;
+      padding: 9px 12px;
       border-radius: 10px;
       cursor: pointer;
-      transition: box-shadow .2s ease, transform .02s ease-in;
+      transition: filter .15s ease, transform .02s ease;
+      font-size: 14px;
+    }
+
+    button:hover {
+      filter: brightness(1.05)
     }
 
     button:active {
       transform: translateY(1px)
     }
 
-    button:disabled {
-      opacity: .5;
+    button[disabled] {
+      opacity: .55;
+      filter: none;
       cursor: not-allowed
     }
 
-    .table-wrap {
-      margin-top: 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: auto;
-      background: #fff;
-      box-shadow: var(--shadow);
-      max-height: min(60vh, 600px);
+    #ean-status {
+      min-height: 22px;
+      font-size: 13px;
+      margin: 4px 2px 8px;
     }
 
-    .table-scroll {
-      overflow: auto
+    #ean-status.ok {
+      color: var(--success)
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse
+    #ean-status.warn {
+      color: var(--warning)
     }
 
-    thead th {
-      text-align: left;
-      font-size: .9rem;
-      font-weight: 700;
-      color: #374151;
-      background: #f8fafc;
-      border-bottom: 1px solid var(--border);
-      padding: 10px 10px;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    }
-
-    tbody td {
-      padding: 10px 10px;
-      border-bottom: 1px solid var(--border)
-    }
-
-    tbody tr:nth-child(even) {
-      background: #fcfdff
-    }
-
-    tbody tr:hover {
-      background: #f3f7ff
-    }
-
-    td[colspan] {
-      text-align: center;
-      color: var(--muted)
+    #ean-status.err {
+      color: var(--danger)
     }
 
     #scanner {
       display: none;
       position: relative;
       width: 100%;
-      aspect-ratio: 3 / 4;
-      max-height: min(55vh, 520px);
-      margin: 12px auto 0;
+      aspect-ratio: 16/10;
       border: 1px solid var(--border);
       border-radius: 16px;
       overflow: hidden;
       background: #000;
-      box-shadow: var(--shadow);
-      touch-action: none;
     }
 
-    #scanner .scan-roi {
+    .scan-roi {
       position: absolute;
-      inset: 25% 25%;
-      border: 2px dashed rgba(255, 255, 255, .95);
-      border-radius: 10px;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, .35) inset;
+      inset: 25% 25% 25% 25%;
+      border: 2px dashed rgba(255, 255, 255, .65);
+      border-radius: 12px;
       pointer-events: none;
     }
 
-    #scanner video,
-    #scanner canvas,
-    #scanner .drawingBuffer {
-      position: absolute;
-      inset: 0;
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover;
-      display: block;
+    .table-wrap {
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
     }
 
-    #ean-status {
-      margin-top: 8px;
-      color: #374151;
-      font-size: .95rem
+    .table-scroll {
+      overflow: auto;
+      max-height: 420px
     }
 
-    @media (prefers-reduced-motion:reduce) {
-      * {
-        transition: none !important;
-        animation-duration: .01ms !important
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #f9fafb;
+    }
+
+    th,
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f3;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    tbody tr:nth-child(2n) {
+      background: #fbfdff
+    }
+
+    @media (max-width: 640px) {
+      .filters {
+        grid-template-columns: 1fr
       }
-    }
 
-    @media (max-width:480px) {
+      .table-scroll {
+        max-height: 60vh
+      }
+
       .container {
-        width: 94%
+        padding: 16px 12px 30px
+      }
+
+      .card {
+        border-radius: 14px;
+        padding: 16px
+      }
+
+      #scanner {
+        border-radius: 14px
+      }
+
+      .btn-row {
+        gap: 6px
+      }
+
+      input[type="text"] {
+        font-size: 16px
+      }
+
+      .table-wrap {
+        border-radius: 10px
+      }
+
+      .table-scroll {
+        border-radius: 10px
+      }
+
+      .table-wrap,
+      .table-scroll {
+        width: 100%
       }
 
       table {
@@ -258,6 +281,12 @@
     <div class="btn-row">
       <button type="button" id="scan-btn">Vonalkód olvasása</button>
       <button type="button" id="open-link-btn" disabled>Link megnyitása</button>
+
+      <input type="range" id="zoom-slider" min="1" max="1" step="0.1" value="1" disabled style="width:160px">
+      <button type="button" id="zoom-out" disabled>–</button>
+      <button type="button" id="zoom-in" disabled>+</button>
+      <button type="button" id="refocus-btn" disabled>Fókusz</button>
+      <button type="button" id="torch-btn" disabled>Fény</button>
     </div>
 
     <div id="ean-status"></div>
