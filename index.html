@@ -191,6 +191,15 @@
       touch-action: none;
     }
 
+    #scanner .scan-roi {
+      position: absolute;
+      inset: 25% 25%;
+      border: 2px dashed rgba(255, 255, 255, .95);
+      border-radius: 10px;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, .35) inset;
+      pointer-events: none;
+    }
+
     #scanner video,
     #scanner canvas,
     #scanner .drawingBuffer {
