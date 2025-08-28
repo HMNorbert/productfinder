@@ -14,8 +14,6 @@
       --text: #111827;
       --muted: #6b7280;
       --primary: #2563eb;
-      --primary-weak: #e6efff;
-      --primary-weak-2: #eef4ff;
       --border: #e5e7eb;
       --success: #10b981;
       --danger: #ef4444;
@@ -171,6 +169,14 @@
       pointer-events: none;
     }
 
+    .cam-controls {
+      display: none;
+    }
+
+    .cam-controls.active {
+      display: flex;
+    }
+
     .table-wrap {
       margin-top: 14px;
       border: 1px solid var(--border);
@@ -266,7 +272,6 @@
         <label for="cikkszam">Cikkszám</label>
         <input type="text" id="cikkszam" placeholder="Pl. AZI-WN35VA" />
       </div>
-
       <div>
         <label for="termeknev">Terméknév</label>
         <input type="text" id="termeknev" placeholder="Pl. AZURI MIDORI" />
@@ -281,12 +286,19 @@
     <div class="btn-row">
       <button type="button" id="scan-btn">Vonalkód olvasása</button>
       <button type="button" id="open-link-btn" disabled>Link megnyitása</button>
+    </div>
 
-      <input type="range" id="zoom-slider" min="1" max="1" step="0.1" value="1" disabled style="width:160px">
-      <button type="button" id="zoom-out" disabled>–</button>
-      <button type="button" id="zoom-in" disabled>+</button>
-      <button type="button" id="refocus-btn" disabled>Fókusz</button>
-      <button type="button" id="torch-btn" disabled>Fény</button>
+    <div class="btn-row cam-controls" id="cam-controls">
+      <input type="range" id="zoom-slider" min="1" max="1" step="0.1" value="1" disabled style="width:160px"
+        title="Zoom">
+      <button type="button" id="zoom-out" disabled title="Zoom –">–</button>
+      <button type="button" id="zoom-in" disabled title="Zoom +">+</button>
+      <button type="button" id="refocus-btn" disabled title="Refókusz">Fókusz</button>
+      <button type="button" id="torch-btn" disabled title="Zseblámpa">Fény</button>
+
+      <span style="font-size:12px;color:var(--muted)">Fényerő</span>
+      <input type="range" id="exposure-slider" min="0.6" max="1.6" step="0.05" value="1.0" disabled style="width:160px"
+        title="Fényerő">
     </div>
 
     <div id="ean-status"></div>
@@ -308,7 +320,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-
   <script src="adatbazis.js"></script>
   <script src="script.js"></script>
 </body>
