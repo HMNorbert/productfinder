@@ -57,18 +57,27 @@ const scanBtn = document.getElementById("scan-btn");
 const openLinkBtn = document.getElementById("open-link-btn");
 const eanStatus = document.getElementById("ean-status");
 const scannerEl = document.getElementById("scanner");
+
+const camControls = document.getElementById("cam-controls");
 const zoomSlider = document.getElementById("zoom-slider");
 const zoomInBtn = document.getElementById("zoom-in");
 const zoomOutBtn = document.getElementById("zoom-out");
 const refocusBtn = document.getElementById("refocus-btn");
 const torchBtn = document.getElementById("torch-btn");
+const exposureSlider = document.getElementById("exposure-slider");
 
 let eanMap = new Map();
 let scanning = false;
+
 let activeTrack = null;
+let videoElRef = null;
+
 let zoomSupported = false;
 let torchSupported = false;
 let focusModes = [];
+let exposureKind = null;
+let torchOn = false;
+let uiBound = false;
 
 fetch("ean_adatbazis.json", { cache: "no-store" })
   .then((r) => (r.ok ? r.json() : {}))
@@ -135,12 +144,107 @@ function handleEan(raw) {
 if (eanInput) {
   eanInput.addEventListener("input", (e) => handleEan(e.target.value));
 }
-
 if (openLinkBtn) {
   openLinkBtn.addEventListener("click", () => {
     const href = openLinkBtn.dataset.href;
     if (href) window.open(href, "_blank", "noopener,noreferrer");
   });
+}
+
+function setCamControlsActive(active) {
+  if (!camControls) return;
+  camControls.classList.toggle("active", !!active);
+}
+
+function applyZoom(val) {
+  if (!activeTrack) return;
+  activeTrack.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => { });
+}
+
+function applyExposure(val) {
+  if (!activeTrack) {
+    if (exposureKind === "css" && videoElRef) {
+      videoElRef.style.filter = `brightness(${val})`;
+    }
+    return;
+  }
+  if (exposureKind === "exposureCompensation") {
+    activeTrack.applyConstraints({ advanced: [{ exposureCompensation: val }] }).catch(() => { });
+  } else if (exposureKind === "brightness") {
+    activeTrack.applyConstraints({ advanced: [{ brightness: val }] }).catch(() => { });
+  } else if (exposureKind === "css" && videoElRef) {
+    videoElRef.style.filter = `brightness(${val})`;
+  }
+}
+
+function refocusNow() {
+  if (!activeTrack) return;
+  try {
+    const caps = activeTrack.getCapabilities ? activeTrack.getCapabilities() : {};
+    const fm = Array.isArray(caps.focusMode) ? caps.focusMode : (caps.focusMode ? [caps.focusMode] : []);
+    const prefer = fm.includes("continuous") ? "continuous" : (fm.includes("auto") ? "auto" : null);
+    if (prefer) {
+      activeTrack.applyConstraints({ advanced: [{ focusMode: prefer }] }).catch(() => { });
+    }
+  } catch { }
+}
+
+function toggleTorch() {
+  if (!activeTrack || !torchSupported) return;
+  torchOn = !torchOn;
+  activeTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => { });
+  if (torchBtn) torchBtn.textContent = torchOn ? "Fény KI" : "Fény";
+}
+
+function ensureUIBound() {
+  if (uiBound) return;
+
+  if (zoomSlider) {
+    zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
+  }
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener("click", () => {
+      const v = Math.min(Number(zoomSlider.value) + Number(zoomSlider.step || 0.1), Number(zoomSlider.max || 1));
+      zoomSlider.value = String(v); applyZoom(v);
+    });
+  }
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener("click", () => {
+      const v = Math.max(Number(zoomSlider.value) - Number(zoomSlider.step || 0.1), Number(zoomSlider.min || 1));
+      zoomSlider.value = String(v); applyZoom(v);
+    });
+  }
+  if (refocusBtn) {
+    refocusBtn.addEventListener("click", refocusNow);
+  }
+  if (torchBtn) {
+    torchBtn.addEventListener("click", toggleTorch);
+  }
+  if (exposureSlider) {
+    exposureSlider.addEventListener("input", () => applyExposure(Number(exposureSlider.value)));
+  }
+
+  let startDist = 0, startZoom = 1;
+  const dist = (t0, t1) => Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+  scannerEl.addEventListener("touchstart", (e) => {
+    if (zoomSupported && e.touches.length === 2) {
+      startDist = dist(e.touches[0], e.touches[1]);
+      startZoom = Number(zoomSlider.value || 1);
+    }
+  }, { passive: true });
+  scannerEl.addEventListener("touchmove", (e) => {
+    if (zoomSupported && e.touches.length === 2) {
+      const d = dist(e.touches[0], e.touches[1]);
+      const delta = (d - startDist) / 200;
+      const v = Math.max(Number(zoomSlider.min || 1),
+        Math.min(Number(zoomSlider.max || 1), startZoom + delta));
+      zoomSlider.value = String(v); applyZoom(v);
+    }
+  }, { passive: true });
+
+  scannerEl.addEventListener("click", refocusNow);
+
+  uiBound = true;
 }
 
 function startScan() {
@@ -164,13 +268,7 @@ function startScan() {
         area: { top: "25%", right: "25%", left: "25%", bottom: "25%" }
       },
       decoder: {
-        readers: [
-          "ean_reader",
-          "ean_8_reader",
-          "code_128_reader",
-          "upc_reader",
-          "upc_e_reader"
-        ]
+        readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "upc_e_reader"]
       },
       locator: { patchSize: "large", halfSample: true },
       locate: true,
@@ -184,6 +282,8 @@ function startScan() {
       scannerEl.style.display = "block";
       Quagga.start();
       scanning = true;
+      setCamControlsActive(true);
+      ensureUIBound();
 
       if (!scannerEl.querySelector(".scan-roi")) {
         const roi = document.createElement("div");
@@ -193,6 +293,7 @@ function startScan() {
 
       setTimeout(() => {
         const video = scannerEl.querySelector("video");
+        videoElRef = video || null;
         if (video) {
           video.setAttribute("playsinline", "");
           video.setAttribute("webkit-playsinline", "");
@@ -201,6 +302,7 @@ function startScan() {
           video.style.width = "100%";
           video.style.height = "100%";
           video.style.objectFit = "cover";
+          video.style.filter = "";
         }
         const canvas = scannerEl.querySelector("canvas");
         if (canvas) {
@@ -209,15 +311,15 @@ function startScan() {
         }
 
         try {
-          const videoEl = scannerEl.querySelector("video");
-          const track = videoEl && videoEl.srcObject && videoEl.srcObject.getVideoTracks()[0];
+          const track = video && video.srcObject && video.srcObject.getVideoTracks()[0];
           if (!track) throw new Error("Nincs aktív videó track.");
           activeTrack = track;
+
           const caps = track.getCapabilities ? track.getCapabilities() : {};
           const settings = track.getSettings ? track.getSettings() : {};
 
-          if (caps && caps.zoom !== undefined) {
-            zoomSupported = true;
+          zoomSupported = !!(caps && caps.zoom !== undefined);
+          if (zoomSupported) {
             const min = (caps.zoom && caps.zoom.min) != null ? caps.zoom.min : 1;
             const max = (caps.zoom && caps.zoom.max) != null ? caps.zoom.max : 1;
             const step = (caps.zoom && caps.zoom.step) || 0.1;
@@ -232,62 +334,56 @@ function startScan() {
             }
             if (zoomInBtn) zoomInBtn.disabled = false;
             if (zoomOutBtn) zoomOutBtn.disabled = false;
-
-            const applyZoom = (val) => track.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => { });
-
-            if (zoomSlider) zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
-            if (zoomInBtn) zoomInBtn.addEventListener("click", () => {
-              const v = Math.min(Number(zoomSlider.value) + Number(zoomSlider.step), Number(zoomSlider.max));
-              zoomSlider.value = String(v); applyZoom(v);
-            });
-            if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => {
-              const v = Math.max(Number(zoomSlider.value) - Number(zoomSlider.step), Number(zoomSlider.min));
-              zoomSlider.value = String(v); applyZoom(v);
-            });
-
-            let startDist = 0, startZoom = Number(zoomSlider.value);
-            const dist = (t0, t1) => Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
-
-            scannerEl.addEventListener("touchstart", (e) => {
-              if (zoomSupported && e.touches.length === 2) {
-                startDist = dist(e.touches[0], e.touches[1]);
-                startZoom = Number(zoomSlider.value);
-              }
-            }, { passive: true });
-
-            scannerEl.addEventListener("touchmove", (e) => {
-              if (zoomSupported && e.touches.length === 2) {
-                const d = dist(e.touches[0], e.touches[1]);
-                const delta = (d - startDist) / 200;
-                const v = Math.max(Number(zoomSlider.min), Math.min(Number(zoomSlider.max), startZoom + delta));
-                zoomSlider.value = String(v); applyZoom(v);
-              }
-            }, { passive: true });
+          } else {
+            if (zoomSlider) zoomSlider.disabled = true;
+            if (zoomInBtn) zoomInBtn.disabled = true;
+            if (zoomOutBtn) zoomOutBtn.disabled = true;
           }
 
           focusModes = Array.isArray(caps.focusMode) ? caps.focusMode
             : (caps.focusMode ? [caps.focusMode] : []);
-          const prefer = focusModes.includes("continuous") ? "continuous"
-            : (focusModes.includes("auto") ? "auto" : null);
-
-          if (prefer) {
+          if (focusModes.length) {
             if (refocusBtn) refocusBtn.disabled = false;
-            const refocus = () => track.applyConstraints({ advanced: [{ focusMode: prefer }] }).catch(() => { });
-            if (refocusBtn) refocusBtn.addEventListener("click", refocus);
-            scannerEl.addEventListener("click", refocus);
+          } else {
+            if (refocusBtn) refocusBtn.disabled = true;
           }
 
-          if (caps && caps.torch) {
-            torchSupported = true;
-            if (torchBtn) torchBtn.disabled = false;
-            let on = false;
-            const applyTorch = () => track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => { });
-            if (torchBtn) torchBtn.addEventListener("click", () => {
-              on = !on; applyTorch();
-              torchBtn.textContent = on ? "Fény KI" : "Fény";
+          torchSupported = !!(caps && caps.torch);
+          if (torchBtn) {
+            torchOn = false;
+            torchBtn.disabled = !torchSupported;
+            torchBtn.textContent = "Fény";
+          }
+
+          exposureKind = null;
+          if (caps && caps.exposureCompensation !== undefined) {
+            exposureKind = "exposureCompensation";
+            const { min = -2, max = 2, step = 0.1 } = caps.exposureCompensation || {};
+            const cur = (settings && settings.exposureCompensation) != null ? settings.exposureCompensation : 0;
+            Object.assign(exposureSlider, {
+              min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false
+            });
+          } else if (caps && caps.brightness !== undefined) {
+            exposureKind = "brightness";
+            const { min = 0, max = 1, step = 0.05 } = caps.brightness || {};
+            const cur = (settings && settings.brightness) != null ? settings.brightness : Math.max(min, Math.min(1, (min + max) / 2));
+            Object.assign(exposureSlider, {
+              min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false
+            });
+          } else {
+            exposureKind = "css";
+            Object.assign(exposureSlider, {
+              min: "0.6", max: "1.6", step: "0.05", value: "1.0", disabled: false
             });
           }
+
         } catch (e) {
+          if (zoomSlider) zoomSlider.disabled = true;
+          if (zoomInBtn) zoomInBtn.disabled = true;
+          if (zoomOutBtn) zoomOutBtn.disabled = true;
+          if (refocusBtn) refocusBtn.disabled = true;
+          if (torchBtn) torchBtn.disabled = true;
+          if (exposureSlider) exposureSlider.disabled = true;
         }
       }, 0);
     }
@@ -299,8 +395,20 @@ function stopScan() {
   Quagga.stop();
   scannerEl.style.display = "none";
   scanning = false;
-  [zoomSlider, zoomInBtn, zoomOutBtn, refocusBtn, torchBtn].forEach(el => { if (el) el.disabled = true; });
-  activeTrack = null; zoomSupported = false; torchSupported = false; focusModes = [];
+
+  setCamControlsActive(false);
+  [zoomSlider, zoomInBtn, zoomOutBtn, refocusBtn, torchBtn, exposureSlider].forEach(el => { if (el) el.disabled = true; });
+
+  torchOn = false;
+  if (torchBtn) torchBtn.textContent = "Fény";
+  if (videoElRef) videoElRef.style.filter = "";
+
+  activeTrack = null;
+  videoElRef = null;
+  zoomSupported = false;
+  torchSupported = false;
+  focusModes = [];
+  exposureKind = null;
 }
 
 const STABLE_HITS = 3;
