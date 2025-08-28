@@ -68,7 +68,6 @@ const exposureSlider = document.getElementById("exposure-slider");
 
 let eanMap = new Map();
 let scanning = false;
-
 let activeTrack = null;
 let videoElRef = null;
 
@@ -79,15 +78,66 @@ let exposureKind = null;
 let torchOn = false;
 let uiBound = false;
 
+function buildEanMap(obj) {
+  const m = new Map();
+  if (!obj) return m;
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      if (!item) continue;
+      if (Array.isArray(item)) {
+        const [ean, url] = item;
+        if (ean && url) m.set(String(ean), String(url));
+      } else if (typeof item === "object") {
+        const e = item.ean || item.EAN || item.kod || item.code;
+        const u = item.url || item.link || item.href;
+        if (e && u) m.set(String(e), String(u));
+      }
+    }
+    return m;
+  }
+
+  if (typeof obj === "object") {
+    for (const [k, v] of Object.entries(obj)) {
+      if (v && typeof v === "object") {
+        const u = v.url || v.link || v.href;
+        if (u) m.set(String(k), String(u));
+      } else if (typeof v === "string") {
+        m.set(String(k), v);
+      }
+    }
+  }
+  return m;
+}
+
+function normalizeProductUrl(raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+
+  if (!/^https?:\/\//i.test(s)) {
+    if (s.startsWith("/")) s = "https://www.meleget.hu" + s;
+    else s = "https://www.meleget.hu/" + s;
+  }
+
+  try {
+    const u = new URL(s);
+    if (
+      !u.pathname.endsWith("/") &&
+      !u.pathname.includes(".") &&
+      !u.search &&
+      !u.hash
+    ) {
+      u.pathname += "/";
+    }
+    return u.toString();
+  } catch {
+    return encodeURI(s);
+  }
+}
+
 fetch("ean_adatbazis.json", { cache: "no-store" })
   .then((r) => (r.ok ? r.json() : {}))
-  .then((obj) => {
-    if (Array.isArray(obj)) {
-      eanMap = new Map(obj.map((x) => [String(x[0] || ""), String(x[1] || "")]));
-    } else if (obj && typeof obj === "object") {
-      eanMap = new Map(Object.entries(obj).map(([k, v]) => [String(k || ""), String(v || "")]));
-    }
-  })
+  .then((obj) => { eanMap = buildEanMap(obj); })
   .catch(() => { });
 
 function keresCikkszamSzerint() {
@@ -129,11 +179,18 @@ function handleEan(raw) {
     openLinkBtn.dataset.href = "";
     return;
   }
-  const href = eanMap.get(ean);
-  if (href) {
+
+  const rawUrl = eanMap.get(ean);
+  const href = normalizeProductUrl(rawUrl || "");
+
+  if (rawUrl && /^https?:\/\//i.test(href)) {
     setEanStatus("ok", "Találat! A link megnyitható.");
     openLinkBtn.disabled = false;
     openLinkBtn.dataset.href = href;
+  } else if (rawUrl) {
+    setEanStatus("warn", "Link formátum hibás az adatbázisban ehhez az EAN-hoz.");
+    openLinkBtn.disabled = true;
+    openLinkBtn.dataset.href = "";
   } else {
     setEanStatus("warn", "Nincs hivatkozás ehhez az EAN-hoz az adatbázisban.");
     openLinkBtn.disabled = true;
@@ -141,9 +198,8 @@ function handleEan(raw) {
   }
 }
 
-if (eanInput) {
-  eanInput.addEventListener("input", (e) => handleEan(e.target.value));
-}
+if (eanInput) eanInput.addEventListener("input", (e) => handleEan(e.target.value));
+
 if (openLinkBtn) {
   openLinkBtn.addEventListener("click", () => {
     const href = openLinkBtn.dataset.href;
@@ -163,9 +219,7 @@ function applyZoom(val) {
 
 function applyExposure(val) {
   if (!activeTrack) {
-    if (exposureKind === "css" && videoElRef) {
-      videoElRef.style.filter = `brightness(${val})`;
-    }
+    if (exposureKind === "css" && videoElRef) videoElRef.style.filter = `brightness(${val})`;
     return;
   }
   if (exposureKind === "exposureCompensation") {
@@ -183,9 +237,7 @@ function refocusNow() {
     const caps = activeTrack.getCapabilities ? activeTrack.getCapabilities() : {};
     const fm = Array.isArray(caps.focusMode) ? caps.focusMode : (caps.focusMode ? [caps.focusMode] : []);
     const prefer = fm.includes("continuous") ? "continuous" : (fm.includes("auto") ? "auto" : null);
-    if (prefer) {
-      activeTrack.applyConstraints({ advanced: [{ focusMode: prefer }] }).catch(() => { });
-    }
+    if (prefer) activeTrack.applyConstraints({ advanced: [{ focusMode: prefer }] }).catch(() => { });
   } catch { }
 }
 
@@ -199,30 +251,18 @@ function toggleTorch() {
 function ensureUIBound() {
   if (uiBound) return;
 
-  if (zoomSlider) {
-    zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
-  }
-  if (zoomInBtn) {
-    zoomInBtn.addEventListener("click", () => {
-      const v = Math.min(Number(zoomSlider.value) + Number(zoomSlider.step || 0.1), Number(zoomSlider.max || 1));
-      zoomSlider.value = String(v); applyZoom(v);
-    });
-  }
-  if (zoomOutBtn) {
-    zoomOutBtn.addEventListener("click", () => {
-      const v = Math.max(Number(zoomSlider.value) - Number(zoomSlider.step || 0.1), Number(zoomSlider.min || 1));
-      zoomSlider.value = String(v); applyZoom(v);
-    });
-  }
-  if (refocusBtn) {
-    refocusBtn.addEventListener("click", refocusNow);
-  }
-  if (torchBtn) {
-    torchBtn.addEventListener("click", toggleTorch);
-  }
-  if (exposureSlider) {
-    exposureSlider.addEventListener("input", () => applyExposure(Number(exposureSlider.value)));
-  }
+  if (zoomSlider) zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
+  if (zoomInBtn) zoomInBtn.addEventListener("click", () => {
+    const v = Math.min(Number(zoomSlider.value) + Number(zoomSlider.step || 0.1), Number(zoomSlider.max || 1));
+    zoomSlider.value = String(v); applyZoom(v);
+  });
+  if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => {
+    const v = Math.max(Number(zoomSlider.value) - Number(zoomSlider.step || 0.1), Number(zoomSlider.min || 1));
+    zoomSlider.value = String(v); applyZoom(v);
+  });
+  if (refocusBtn) refocusBtn.addEventListener("click", refocusNow);
+  if (torchBtn) torchBtn.addEventListener("click", toggleTorch);
+  if (exposureSlider) exposureSlider.addEventListener("input", () => applyExposure(Number(exposureSlider.value)));
 
   let startDist = 0, startZoom = 1;
   const dist = (t0, t1) => Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
@@ -236,8 +276,7 @@ function ensureUIBound() {
     if (zoomSupported && e.touches.length === 2) {
       const d = dist(e.touches[0], e.touches[1]);
       const delta = (d - startDist) / 200;
-      const v = Math.max(Number(zoomSlider.min || 1),
-        Math.min(Number(zoomSlider.max || 1), startZoom + delta));
+      const v = Math.max(Number(zoomSlider.min || 1), Math.min(Number(zoomSlider.max || 1), startZoom + delta));
       zoomSlider.value = String(v); applyZoom(v);
     }
   }, { passive: true });
@@ -249,36 +288,21 @@ function ensureUIBound() {
 
 function startScan() {
   if (scanning) return;
-  if (!window.Quagga) {
-    alert("A vonalkód olvasó könyvtár nem töltődött be.");
-    return;
-  }
+  if (!window.Quagga) { alert("A vonalkód olvasó könyvtár nem töltődött be."); return; }
+
   Quagga.init(
     {
       inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: scannerEl,
-        constraints: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          advanced: [{ focusMode: "continuous" }]
-        },
+        name: "Live", type: "LiveStream", target: scannerEl,
+        constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, advanced: [{ focusMode: "continuous" }] },
         area: { top: "25%", right: "25%", left: "25%", bottom: "25%" }
       },
-      decoder: {
-        readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "upc_e_reader"]
-      },
-      locator: { patchSize: "large", halfSample: true },
-      locate: true,
+      decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "upc_e_reader"] },
+      locator: { patchSize: "large", halfSample: true }, locate: true,
       numOfWorkers: navigator.hardwareConcurrency || 2
     },
     (err) => {
-      if (err) {
-        alert("Kamera hiba: " + err);
-        return;
-      }
+      if (err) { alert("Kamera hiba: " + err); return; }
       scannerEl.style.display = "block";
       Quagga.start();
       scanning = true;
@@ -297,18 +321,12 @@ function startScan() {
         if (video) {
           video.setAttribute("playsinline", "");
           video.setAttribute("webkit-playsinline", "");
-          video.muted = true;
-          video.autoplay = true;
-          video.style.width = "100%";
-          video.style.height = "100%";
-          video.style.objectFit = "cover";
+          video.muted = true; video.autoplay = true;
+          video.style.width = "100%"; video.style.height = "100%"; video.style.objectFit = "cover";
           video.style.filter = "";
         }
         const canvas = scannerEl.querySelector("canvas");
-        if (canvas) {
-          canvas.style.width = "100%";
-          canvas.style.height = "100%";
-        }
+        if (canvas) { canvas.style.width = "100%"; canvas.style.height = "100%"; }
 
         try {
           const track = video && video.srcObject && video.srcObject.getVideoTracks()[0];
@@ -320,70 +338,38 @@ function startScan() {
 
           zoomSupported = !!(caps && caps.zoom !== undefined);
           if (zoomSupported) {
-            const min = (caps.zoom && caps.zoom.min) != null ? caps.zoom.min : 1;
-            const max = (caps.zoom && caps.zoom.max) != null ? caps.zoom.max : 1;
-            const step = (caps.zoom && caps.zoom.step) || 0.1;
-            const cur = (settings && settings.zoom) != null ? settings.zoom : min;
+            const min = (caps.zoom?.min ?? 1), max = (caps.zoom?.max ?? 1), step = (caps.zoom?.step || 0.1);
+            const cur = (settings.zoom != null ? settings.zoom : min);
+            Object.assign(zoomSlider, { min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false });
+            zoomInBtn.disabled = false; zoomOutBtn.disabled = false;
+          } else { zoomSlider.disabled = zoomInBtn.disabled = zoomOutBtn.disabled = true; }
 
-            if (zoomSlider) {
-              zoomSlider.min = String(min);
-              zoomSlider.max = String(max);
-              zoomSlider.step = String(step);
-              zoomSlider.value = String(cur);
-              zoomSlider.disabled = false;
-            }
-            if (zoomInBtn) zoomInBtn.disabled = false;
-            if (zoomOutBtn) zoomOutBtn.disabled = false;
-          } else {
-            if (zoomSlider) zoomSlider.disabled = true;
-            if (zoomInBtn) zoomInBtn.disabled = true;
-            if (zoomOutBtn) zoomOutBtn.disabled = true;
-          }
+          focusModes = Array.isArray(caps.focusMode) ? caps.focusMode : (caps.focusMode ? [caps.focusMode] : []);
+          refocusBtn.disabled = !focusModes.length;
 
-          focusModes = Array.isArray(caps.focusMode) ? caps.focusMode
-            : (caps.focusMode ? [caps.focusMode] : []);
-          if (focusModes.length) {
-            if (refocusBtn) refocusBtn.disabled = false;
-          } else {
-            if (refocusBtn) refocusBtn.disabled = true;
-          }
-
-          torchSupported = !!(caps && caps.torch);
-          if (torchBtn) {
-            torchOn = false;
-            torchBtn.disabled = !torchSupported;
-            torchBtn.textContent = "Fény";
-          }
+          torchSupported = !!caps.torch;
+          torchOn = false;
+          torchBtn.textContent = "Fény";
+          torchBtn.disabled = !torchSupported;
 
           exposureKind = null;
-          if (caps && caps.exposureCompensation !== undefined) {
+          if (caps.exposureCompensation !== undefined) {
             exposureKind = "exposureCompensation";
             const { min = -2, max = 2, step = 0.1 } = caps.exposureCompensation || {};
-            const cur = (settings && settings.exposureCompensation) != null ? settings.exposureCompensation : 0;
-            Object.assign(exposureSlider, {
-              min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false
-            });
-          } else if (caps && caps.brightness !== undefined) {
+            const cur = (settings.exposureCompensation != null ? settings.exposureCompensation : 0);
+            Object.assign(exposureSlider, { min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false });
+          } else if (caps.brightness !== undefined) {
             exposureKind = "brightness";
             const { min = 0, max = 1, step = 0.05 } = caps.brightness || {};
-            const cur = (settings && settings.brightness) != null ? settings.brightness : Math.max(min, Math.min(1, (min + max) / 2));
-            Object.assign(exposureSlider, {
-              min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false
-            });
+            const cur = (settings.brightness != null ? settings.brightness : Math.max(min, Math.min(1, (min + max) / 2)));
+            Object.assign(exposureSlider, { min: String(min), max: String(max), step: String(step), value: String(cur), disabled: false });
           } else {
             exposureKind = "css";
-            Object.assign(exposureSlider, {
-              min: "0.6", max: "1.6", step: "0.05", value: "1.0", disabled: false
-            });
+            Object.assign(exposureSlider, { min: "0.6", max: "1.6", step: "0.05", value: "1.0", disabled: false });
           }
-
-        } catch (e) {
-          if (zoomSlider) zoomSlider.disabled = true;
-          if (zoomInBtn) zoomInBtn.disabled = true;
-          if (zoomOutBtn) zoomOutBtn.disabled = true;
-          if (refocusBtn) refocusBtn.disabled = true;
-          if (torchBtn) torchBtn.disabled = true;
-          if (exposureSlider) exposureSlider.disabled = true;
+        } catch {
+          zoomSlider.disabled = zoomInBtn.disabled = zoomOutBtn.disabled = true;
+          refocusBtn.disabled = true; torchBtn.disabled = true; exposureSlider.disabled = true;
         }
       }, 0);
     }
@@ -398,17 +384,11 @@ function stopScan() {
 
   setCamControlsActive(false);
   [zoomSlider, zoomInBtn, zoomOutBtn, refocusBtn, torchBtn, exposureSlider].forEach(el => { if (el) el.disabled = true; });
-
-  torchOn = false;
-  if (torchBtn) torchBtn.textContent = "Fény";
+  torchOn = false; torchBtn.textContent = "Fény";
   if (videoElRef) videoElRef.style.filter = "";
 
-  activeTrack = null;
-  videoElRef = null;
-  zoomSupported = false;
-  torchSupported = false;
-  focusModes = [];
-  exposureKind = null;
+  activeTrack = null; videoElRef = null;
+  zoomSupported = false; torchSupported = false; focusModes = []; exposureKind = null;
 }
 
 const STABLE_HITS = 3;
@@ -435,10 +415,7 @@ if (window.Quagga) {
     recentHits.push(digits);
     if (recentHits.length > STABLE_HITS) recentHits.shift();
 
-    const stable =
-      recentHits.length === STABLE_HITS &&
-      recentHits.every((v) => v === digits);
-
+    const stable = recentHits.length === STABLE_HITS && recentHits.every((v) => v === digits);
     if (!stable) return;
 
     if (eanInput) eanInput.value = digits;
