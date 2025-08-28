@@ -109,9 +109,7 @@ fetch("ean_adatbazis.json", { cache: "no-store" })
     }
     eanMap = new Map(Object.entries(obj || {}));
   })
-  .catch(() => {
-    eanMap = new Map();
-  });
+  .catch(() => { eanMap = new Map(); });
 
 function handleEan(eanCode) {
   const code = (eanCode || "").replace(/\D/g, "");
@@ -173,7 +171,9 @@ function startScan() {
         name: "Live",
         type: "LiveStream",
         target: scannerEl,
-        constraints: { facingMode: "environment" }
+        constraints: {
+          facingMode: "environment"
+        }
       },
       decoder: { readers: ["ean_reader", "code_128_reader"] },
       locate: true
@@ -186,6 +186,24 @@ function startScan() {
       scannerEl.style.display = "block";
       Quagga.start();
       scanning = true;
+
+      setTimeout(() => {
+        const video = scannerEl.querySelector("video");
+        if (video) {
+          video.setAttribute("playsinline", "");
+          video.setAttribute("webkit-playsinline", "");
+          video.muted = true;
+          video.autoplay = true;
+          video.style.width = "100%";
+          video.style.height = "100%";
+          video.style.objectFit = "cover";
+        }
+        const canvas = scannerEl.querySelector("canvas");
+        if (canvas) {
+          canvas.style.width = "100%";
+          canvas.style.height = "100%";
+        }
+      }, 0);
     }
   );
 }
