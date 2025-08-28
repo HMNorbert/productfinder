@@ -172,11 +172,19 @@ function startScan() {
         type: "LiveStream",
         target: scannerEl,
         constraints: {
-          facingMode: "environment"
-        }
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          advanced: [{ focusMode: "continuous" }]
+        },
+        area: { top: "25%", right: "25%", left: "25%", bottom: "25%" }
       },
-      decoder: { readers: ["ean_reader", "code_128_reader"] },
-      locate: true
+      decoder: {
+        readers: ["ean_reader"]
+      },
+      locator: { patchSize: "large", halfSample: true },
+      locate: true,
+      numOfWorkers: navigator.hardwareConcurrency || 2
     },
     (err) => {
       if (err) {
@@ -186,6 +194,13 @@ function startScan() {
       scannerEl.style.display = "block";
       Quagga.start();
       scanning = true;
+
+      // ROI doboz kirakása (egyszer)
+      if (!scannerEl.querySelector(".scan-roi")) {
+        const roi = document.createElement("div");
+        roi.className = "scan-roi";
+        scannerEl.appendChild(roi);
+      }
 
       setTimeout(() => {
         const video = scannerEl.querySelector("video");
@@ -215,15 +230,42 @@ function stopScan() {
   scanning = false;
 }
 
+const STABLE_HITS = 3;
+let recentHits = [];
+
+function isValidEAN13(str) {
+  const s = (str || "").replace(/\D/g, "");
+  if (s.length !== 13) return false;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    const n = s.charCodeAt(i) - 48;
+    sum += (i % 2 === 0) ? n : n * 3;
+  }
+  const check = (10 - (sum % 10)) % 10;
+  return check === (s.charCodeAt(12) - 48);
+}
+
 if (window.Quagga) {
   Quagga.onDetected(({ codeResult }) => {
-    const code = (codeResult && codeResult.code) || "";
-    if (!code) return;
-    if (eanInput) eanInput.value = code;
-    handleEan(code);
+    const raw = (codeResult && codeResult.code) || "";
+    const digits = raw.replace(/\D/g, "");
+    if (!isValidEAN13(digits)) return;
+
+    recentHits.push(digits);
+    if (recentHits.length > STABLE_HITS) recentHits.shift();
+    const stable =
+      recentHits.length === STABLE_HITS &&
+      recentHits.every((v) => v === digits);
+
+    if (!stable) return;
+
+    if (eanInput) eanInput.value = digits;
+    handleEan(digits);
+    recentHits = [];
     stopScan();
   });
 }
+
 
 if (scanBtn) {
   scanBtn.addEventListener("click", () => (scanning ? stopScan() : startScan()));
