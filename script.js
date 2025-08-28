@@ -14,7 +14,9 @@ function renderTalalatok(filterFn, uzenetHaUres) {
   let talalatok = 0;
 
   for (const [cikkszam, adat] of Object.entries(adatbazis)) {
-    if (filterFn(cikkszam, adat)) {
+    try {
+      if (!filterFn(cikkszam, adat)) continue;
+
       const sor = document.createElement("tr");
       const cellaCikkszam = document.createElement("td");
       const cellaNev = document.createElement("td");
@@ -26,7 +28,7 @@ function renderTalalatok(filterFn, uzenetHaUres) {
       sor.appendChild(cellaNev);
       tablaBody.appendChild(sor);
       talalatok++;
-    }
+    } catch { }
   }
 
   if (talalatok === 0) {
@@ -41,26 +43,43 @@ function renderTalalatok(filterFn, uzenetHaUres) {
 
 function frissitTiltast() {
   const vanCikkszam = cikkszamInput.value.trim().length > 0;
-  const vanNev = termeknevInput.value.trim().length > 0;
-
-  if (vanCikkszam) {
-    termeknevInput.value = "";
-    termeknevInput.disabled = true;
-  } else {
-    termeknevInput.disabled = false;
-  }
-
-  if (vanNev) {
-    cikkszamInput.value = "";
-    cikkszamInput.disabled = true;
-  } else {
-    cikkszamInput.disabled = false;
-  }
-
-  if (!vanCikkszam && !vanNev) {
-    tablaBody.innerHTML = "";
-  }
+  const vanTermekNev = termeknevInput.value.trim().length > 0;
+  if (vanCikkszam) termeknevInput.value = "";
+  if (vanTermekNev) cikkszamInput.value = "";
 }
+
+cikkszamInput.addEventListener("input", keresCikkszamSzerint);
+termeknevInput.addEventListener("input", keresNevSzerint);
+frissitTiltast();
+
+const eanInput = document.getElementById("ean");
+const scanBtn = document.getElementById("scan-btn");
+const openLinkBtn = document.getElementById("open-link-btn");
+const eanStatus = document.getElementById("ean-status");
+const scannerEl = document.getElementById("scanner");
+const zoomSlider = document.getElementById("zoom-slider");
+const zoomInBtn = document.getElementById("zoom-in");
+const zoomOutBtn = document.getElementById("zoom-out");
+const refocusBtn = document.getElementById("refocus-btn");
+const torchBtn = document.getElementById("torch-btn");
+
+let eanMap = new Map();
+let scanning = false;
+let activeTrack = null;
+let zoomSupported = false;
+let torchSupported = false;
+let focusModes = [];
+
+fetch("ean_adatbazis.json", { cache: "no-store" })
+  .then((r) => (r.ok ? r.json() : {}))
+  .then((obj) => {
+    if (Array.isArray(obj)) {
+      eanMap = new Map(obj.map((x) => [String(x[0] || ""), String(x[1] || "")]));
+    } else if (obj && typeof obj === "object") {
+      eanMap = new Map(Object.entries(obj).map(([k, v]) => [String(k || ""), String(v || "")]));
+    }
+  })
+  .catch(() => { });
 
 function keresCikkszamSzerint() {
   const q = norm(cikkszamInput.value.trim());
@@ -82,74 +101,39 @@ function keresNevSzerint() {
   );
 }
 
-cikkszamInput.addEventListener("input", keresCikkszamSzerint);
-termeknevInput.addEventListener("input", keresNevSzerint);
-frissitTiltast();
+function setEanStatus(cls, text) {
+  eanStatus.className = cls;
+  eanStatus.textContent = text || "";
+}
 
-const eanInput = document.getElementById("ean");
-const scanBtn = document.getElementById("scan-btn");
-const openLinkBtn = document.getElementById("open-link-btn");
-const eanStatus = document.getElementById("ean-status");
-const scannerEl = document.getElementById("scanner");
-
-let eanMap = new Map();
-let scanning = false;
-
-fetch("ean_adatbazis.json", { cache: "no-store" })
-  .then((r) => (r.ok ? r.json() : {}))
-  .then((obj) => {
-    if (Array.isArray(obj)) {
-      const tmp = {};
-      for (const item of obj) {
-        if (item && item.ean && item.cikkszam) {
-          tmp[item.ean] = { cikkszam: item.cikkszam, url: item.url || "" };
-        }
-      }
-      obj = tmp;
-    }
-    eanMap = new Map(Object.entries(obj || {}));
-  })
-  .catch(() => { eanMap = new Map(); });
-
-function handleEan(eanCode) {
-  const code = (eanCode || "").replace(/\D/g, "");
-  if (!code) {
-    eanStatus.textContent = "";
+function handleEan(raw) {
+  const ean = (raw || "").replace(/\D/g, "");
+  if (ean.length !== 13) {
+    setEanStatus("err", "Az EAN-13 pontosan 13 számjegy.");
     openLinkBtn.disabled = true;
     openLinkBtn.dataset.href = "";
     return;
   }
-
-  const found = eanMap.get(code);
-  if (!found) {
-    eanStatus.textContent = "Érvénytelen vagy ismeretlen EAN.";
+  if (!isValidEAN13(ean)) {
+    setEanStatus("err", "Érvénytelen EAN-13 (ellenőrzőszám hibás).");
     openLinkBtn.disabled = true;
     openLinkBtn.dataset.href = "";
     return;
   }
-
-  const { cikkszam, url } = found;
-  const nev =
-    adatbazis[cikkszam] && adatbazis[cikkszam].termek
-      ? " – " + adatbazis[cikkszam].termek
-      : "";
-  eanStatus.textContent = `Találat: ${cikkszam}${nev}`;
-
-  cikkszamInput.value = cikkszam;
-  termeknevInput.value = "";
-  keresCikkszamSzerint();
-
-  if (url) {
+  const href = eanMap.get(ean);
+  if (href) {
+    setEanStatus("ok", "Találat! A link megnyitható.");
     openLinkBtn.disabled = false;
-    openLinkBtn.dataset.href = url;
+    openLinkBtn.dataset.href = href;
   } else {
+    setEanStatus("warn", "Nincs hivatkozás ehhez az EAN-hoz az adatbázisban.");
     openLinkBtn.disabled = true;
     openLinkBtn.dataset.href = "";
   }
 }
 
 if (eanInput) {
-  eanInput.addEventListener("input", () => handleEan(eanInput.value));
+  eanInput.addEventListener("input", (e) => handleEan(e.target.value));
 }
 
 if (openLinkBtn) {
@@ -180,7 +164,13 @@ function startScan() {
         area: { top: "25%", right: "25%", left: "25%", bottom: "25%" }
       },
       decoder: {
-        readers: ["ean_reader"]
+        readers: [
+          "ean_reader",
+          "ean_8_reader",
+          "code_128_reader",
+          "upc_reader",
+          "upc_e_reader"
+        ]
       },
       locator: { patchSize: "large", halfSample: true },
       locate: true,
@@ -217,6 +207,88 @@ function startScan() {
           canvas.style.width = "100%";
           canvas.style.height = "100%";
         }
+
+        try {
+          const videoEl = scannerEl.querySelector("video");
+          const track = videoEl && videoEl.srcObject && videoEl.srcObject.getVideoTracks()[0];
+          if (!track) throw new Error("Nincs aktív videó track.");
+          activeTrack = track;
+          const caps = track.getCapabilities ? track.getCapabilities() : {};
+          const settings = track.getSettings ? track.getSettings() : {};
+
+          if (caps && caps.zoom !== undefined) {
+            zoomSupported = true;
+            const min = (caps.zoom && caps.zoom.min) != null ? caps.zoom.min : 1;
+            const max = (caps.zoom && caps.zoom.max) != null ? caps.zoom.max : 1;
+            const step = (caps.zoom && caps.zoom.step) || 0.1;
+            const cur = (settings && settings.zoom) != null ? settings.zoom : min;
+
+            if (zoomSlider) {
+              zoomSlider.min = String(min);
+              zoomSlider.max = String(max);
+              zoomSlider.step = String(step);
+              zoomSlider.value = String(cur);
+              zoomSlider.disabled = false;
+            }
+            if (zoomInBtn) zoomInBtn.disabled = false;
+            if (zoomOutBtn) zoomOutBtn.disabled = false;
+
+            const applyZoom = (val) => track.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => { });
+
+            if (zoomSlider) zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
+            if (zoomInBtn) zoomInBtn.addEventListener("click", () => {
+              const v = Math.min(Number(zoomSlider.value) + Number(zoomSlider.step), Number(zoomSlider.max));
+              zoomSlider.value = String(v); applyZoom(v);
+            });
+            if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => {
+              const v = Math.max(Number(zoomSlider.value) - Number(zoomSlider.step), Number(zoomSlider.min));
+              zoomSlider.value = String(v); applyZoom(v);
+            });
+
+            let startDist = 0, startZoom = Number(zoomSlider.value);
+            const dist = (t0, t1) => Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
+
+            scannerEl.addEventListener("touchstart", (e) => {
+              if (zoomSupported && e.touches.length === 2) {
+                startDist = dist(e.touches[0], e.touches[1]);
+                startZoom = Number(zoomSlider.value);
+              }
+            }, { passive: true });
+
+            scannerEl.addEventListener("touchmove", (e) => {
+              if (zoomSupported && e.touches.length === 2) {
+                const d = dist(e.touches[0], e.touches[1]);
+                const delta = (d - startDist) / 200;
+                const v = Math.max(Number(zoomSlider.min), Math.min(Number(zoomSlider.max), startZoom + delta));
+                zoomSlider.value = String(v); applyZoom(v);
+              }
+            }, { passive: true });
+          }
+
+          focusModes = Array.isArray(caps.focusMode) ? caps.focusMode
+            : (caps.focusMode ? [caps.focusMode] : []);
+          const prefer = focusModes.includes("continuous") ? "continuous"
+            : (focusModes.includes("auto") ? "auto" : null);
+
+          if (prefer) {
+            if (refocusBtn) refocusBtn.disabled = false;
+            const refocus = () => track.applyConstraints({ advanced: [{ focusMode: prefer }] }).catch(() => { });
+            if (refocusBtn) refocusBtn.addEventListener("click", refocus);
+            scannerEl.addEventListener("click", refocus);
+          }
+
+          if (caps && caps.torch) {
+            torchSupported = true;
+            if (torchBtn) torchBtn.disabled = false;
+            let on = false;
+            const applyTorch = () => track.applyConstraints({ advanced: [{ torch: on }] }).catch(() => { });
+            if (torchBtn) torchBtn.addEventListener("click", () => {
+              on = !on; applyTorch();
+              torchBtn.textContent = on ? "Fény KI" : "Fény";
+            });
+          }
+        } catch (e) {
+        }
       }, 0);
     }
   );
@@ -227,6 +299,8 @@ function stopScan() {
   Quagga.stop();
   scannerEl.style.display = "none";
   scanning = false;
+  [zoomSlider, zoomInBtn, zoomOutBtn, refocusBtn, torchBtn].forEach(el => { if (el) el.disabled = true; });
+  activeTrack = null; zoomSupported = false; torchSupported = false; focusModes = [];
 }
 
 const STABLE_HITS = 3;
@@ -247,11 +321,12 @@ function isValidEAN13(str) {
 if (window.Quagga) {
   Quagga.onDetected(({ codeResult }) => {
     const raw = (codeResult && codeResult.code) || "";
-    const digits = raw.replace(/\D/g, "");
-    if (!isValidEAN13(digits)) return;
+    const digits = (raw || "").replace(/\D/g, "");
+    if (!digits || digits.length < 8) return;
 
     recentHits.push(digits);
     if (recentHits.length > STABLE_HITS) recentHits.shift();
+
     const stable =
       recentHits.length === STABLE_HITS &&
       recentHits.every((v) => v === digits);
@@ -264,7 +339,6 @@ if (window.Quagga) {
     stopScan();
   });
 }
-
 
 if (scanBtn) {
   scanBtn.addEventListener("click", () => (scanning ? stopScan() : startScan()));
