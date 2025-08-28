@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
   <meta charset="UTF-8" />
   <title>Terméknév kereső</title>
   <link rel="icon" href="logoikon.png" type="image/png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
     :root {
@@ -17,73 +18,211 @@
       --border: #e5e7eb;
       --ring: #93c5fd;
       --radius: 12px;
-      --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+      --shadow: 0 1px 2px rgba(0, 0, 0, .06), 0 8px 24px rgba(0, 0, 0, .06);
     }
-    * { box-sizing: border-box }
-    html, body { height:100% }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
     body {
-      margin:0;
-      font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
-      color:var(--text);
-      background:linear-gradient(180deg,var(--bg),#fff);
-      background-repeat:no-repeat;
-      overflow:hidden;
+      height: 100%
     }
+
+    body {
+      margin: 0;
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg), #fff);
+      background-repeat: no-repeat;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     .container {
-      max-width:800px;
-      margin:clamp(16px,4vw,48px) auto;
-      padding:clamp(16px,3vw,32px);
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
+      max-width: 800px;
+      margin: clamp(12px, 4vw, 48px) auto;
+      padding: clamp(12px, 3vw, 28px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
-    h1,h2,h3{margin:0 0 .75rem 0; letter-spacing:.2px}
-    p{color:var(--muted)}
-    .filters{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:16px 20px;
-      margin-bottom:16px;
-    }
-    @media (max-width:700px){ .filters{ grid-template-columns:1fr } }
-    label{ font-size:.9rem; color:var(--muted); display:block; margin-bottom:6px }
-    input[type="text"]{
-      width:100%;
-      padding:10px 10px;
-      border:1px solid var(--border);
-      border-radius:10px;
-      background:#fff; color:var(--text);
-      transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
-    }
-    input::placeholder{ color:#9aa3af }
-    input:focus{ outline:none; border-color:var(--ring); box-shadow:0 0 0 4px rgba(147,197,253,.35) }
-    input:disabled{ background:#f3f4f6; color:#9aa3af; cursor:not-allowed; border-style:dashed }
 
-    .table-wrap{
-      margin-top:10px; border:1px solid var(--border);
-      border-radius:var(--radius); overflow:auto; max-height:600px;
-      background:#fff; box-shadow:var(--shadow);
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 20px;
+      margin-bottom: 12px;
     }
-    .table-scroll{ overflow:auto }
-    table{ width:100%; border-collapse:collapse }
-    thead th{
-      text-align:left; font-size:.9rem; font-weight:700; color:#374151;
-      background:#f8fafc; border-bottom:1px solid var(--border);
-      padding:10px 10px; position:sticky; top:0; z-index:1;
-    }
-    tbody td{ padding:10px 10px; border-bottom:1px solid var(--border) }
-    tbody tr:nth-child(even){ background:#fcfdff }
-    tbody tr:hover{ background:#f3f7ff }
-    td[colspan]{ text-align:center; color:var(--muted) }
 
-    @media (prefers-reduced-motion:reduce){
-      *{ transition:none !important; animation-duration:.01ms !important }
+    @media (max-width:700px) {
+      .filters {
+        grid-template-columns: 1fr
+      }
     }
-    @media (max-width:480px){
-      .container{ width:95% }
-      table{ font-size:12px }
-      .table-wrap{ max-height:500px }
+
+    label {
+      font-size: .9rem;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    input::placeholder {
+      color: #9aa3af
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 4px rgba(147, 197, 253, .35)
+    }
+
+    input:disabled {
+      background: #f3f4f6;
+      color: #9aa3af;
+      cursor: not-allowed;
+      border-style: dashed
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: #111;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: box-shadow .2s ease, transform .02s ease-in;
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    .table-wrap {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: auto;
+      background: #fff;
+      box-shadow: var(--shadow);
+      max-height: min(60vh, 600px);
+    }
+
+    .table-scroll {
+      overflow: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    thead th {
+      text-align: left;
+      font-size: .9rem;
+      font-weight: 700;
+      color: #374151;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 10px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tbody td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fcfdff
+    }
+
+    tbody tr:hover {
+      background: #f3f7ff
+    }
+
+    td[colspan] {
+      text-align: center;
+      color: var(--muted)
+    }
+
+    #scanner {
+      display: none;
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      max-height: min(55vh, 520px);
+      margin: 12px auto 0;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: var(--shadow);
+      touch-action: none;
+    }
+
+    #scanner video,
+    #scanner canvas,
+    #scanner .drawingBuffer {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+      display: block;
+    }
+
+    #ean-status {
+      margin-top: 8px;
+      color: #374151;
+      font-size: .95rem
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      * {
+        transition: none !important;
+        animation-duration: .01ms !important
+      }
+    }
+
+    @media (max-width:480px) {
+      .container {
+        width: 94%
+      }
+
+      table {
+        font-size: 12px
+      }
     }
   </style>
 </head>
@@ -104,16 +243,16 @@
 
     <div>
       <label for="ean">EAN</label>
-      <input type="text" id="ean" placeholder="Pl. 5906675300221" />
+      <input type="text" id="ean" inputmode="numeric" placeholder="Pl. 5906675300221" />
     </div>
 
-    <div style="display:flex; gap:8px; align-items:flex-end; margin-top:8px">
+    <div class="btn-row">
       <button type="button" id="scan-btn">Vonalkód olvasása</button>
       <button type="button" id="open-link-btn" disabled>Link megnyitása</button>
     </div>
 
-    <div id="ean-status" style="margin-top:10px; color:#374151;"></div>
-    <div id="scanner" style="display:none; margin-top:12px;"></div>
+    <div id="ean-status"></div>
+    <div id="scanner"></div>
 
     <div class="table-wrap">
       <div class="table-scroll">
@@ -135,4 +274,5 @@
   <script src="adatbazis.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
