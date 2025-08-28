@@ -195,7 +195,6 @@ function startScan() {
       Quagga.start();
       scanning = true;
 
-      // ROI doboz kirakása (egyszer)
       if (!scannerEl.querySelector(".scan-roi")) {
         const roi = document.createElement("div");
         roi.className = "scan-roi";
