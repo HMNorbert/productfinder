@@ -1,13 +1,10 @@
+// ------- Keresés és megjelenítés -------
 const cikkszamInput = document.getElementById("cikkszam");
 const termeknevInput = document.getElementById("termeknev");
 const tablaBody = document.getElementById("tabla-body");
 
-const norm = (s) =>
-  (s || "")
-    .toString()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase();
+const norm = (s) => (s || "").toString()
+  .normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 function renderTalalatok(filterFn, uzenetHaUres) {
   tablaBody.innerHTML = "";
@@ -16,72 +13,54 @@ function renderTalalatok(filterFn, uzenetHaUres) {
   for (const [cikkszam, adat] of Object.entries(adatbazis)) {
     try {
       if (!filterFn(cikkszam, adat)) continue;
-
-      const sor = document.createElement("tr");
-      const cellaCikkszam = document.createElement("td");
-      const cellaNev = document.createElement("td");
-
-      cellaCikkszam.textContent = cikkszam;
-      cellaNev.textContent = adat.termek;
-
-      sor.appendChild(cellaCikkszam);
-      sor.appendChild(cellaNev);
-      tablaBody.appendChild(sor);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${cikkszam}</td><td>${adat.termek}</td>`;
+      tablaBody.appendChild(tr);
       talalatok++;
-    } catch { }
+    } catch {}
   }
 
   if (talalatok === 0) {
-    const sor = document.createElement("tr");
-    const uzenet = document.createElement("td");
-    uzenet.colSpan = 2;
-    uzenet.textContent = uzenetHaUres;
-    sor.appendChild(uzenet);
-    tablaBody.appendChild(sor);
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 2;
+    td.textContent = uzenetHaUres;
+    tr.appendChild(td);
+    tablaBody.appendChild(tr);
   }
 }
 
 function frissitTiltast() {
-  const vanCikkszam = cikkszamInput.value.trim().length > 0;
-  const vanTermekNev = termeknevInput.value.trim().length > 0;
-  if (vanCikkszam) termeknevInput.value = "";
-  if (vanTermekNev) cikkszamInput.value = "";
+  const vanC = cikkszamInput.value.trim().length > 0;
+  const vanN = termeknevInput.value.trim().length > 0;
+  if (vanC) termeknevInput.value = "";
+  if (vanN) cikkszamInput.value = "";
 }
 
 cikkszamInput.addEventListener("input", keresCikkszamSzerint);
 termeknevInput.addEventListener("input", keresNevSzerint);
 frissitTiltast();
 
+function keresCikkszamSzerint() {
+  const q = norm(cikkszamInput.value.trim());
+  frissitTiltast(); if (!q) return;
+  renderTalalatok((c) => norm(c).includes(q), "Nem található termék ezzel a cikkszám-részlettel.");
+}
+function keresNevSzerint() {
+  const q = norm(termeknevInput.value.trim());
+  frissitTiltast(); if (!q) return;
+  renderTalalatok((_, a) => norm(a.termek).includes(q), "Nem található termék ezzel a névrészlettel.");
+}
+
+// ------- EAN és linkkezelés -------
 const eanInput = document.getElementById("ean");
-const scanBtn = document.getElementById("scan-btn");
 const openLinkBtn = document.getElementById("open-link-btn");
 const eanStatus = document.getElementById("ean-status");
-const scannerEl = document.getElementById("scanner");
-
-const camControls = document.getElementById("cam-controls");
-const zoomSlider = document.getElementById("zoom-slider");
-const zoomInBtn = document.getElementById("zoom-in");
-const zoomOutBtn = document.getElementById("zoom-out");
-const refocusBtn = document.getElementById("refocus-btn");
-const torchBtn = document.getElementById("torch-btn");
-const exposureSlider = document.getElementById("exposure-slider");
-
 let eanMap = new Map();
-let scanning = false;
-let activeTrack = null;
-let videoElRef = null;
-
-let zoomSupported = false;
-let torchSupported = false;
-let focusModes = [];
-let exposureKind = null;
-let torchOn = false;
-let uiBound = false;
 
 function buildEanMap(obj) {
   const m = new Map();
   if (!obj) return m;
-
   if (Array.isArray(obj)) {
     for (const item of obj) {
       if (!item) continue;
@@ -96,7 +75,6 @@ function buildEanMap(obj) {
     }
     return m;
   }
-
   if (typeof obj === "object") {
     for (const [k, v] of Object.entries(obj)) {
       if (v && typeof v === "object") {
@@ -113,163 +91,134 @@ function buildEanMap(obj) {
 function normalizeProductUrl(raw) {
   if (!raw) return "";
   let s = String(raw).trim();
-
   if (!/^https?:\/\//i.test(s)) {
     if (s.startsWith("/")) s = "https://www.meleget.hu" + s;
     else s = "https://www.meleget.hu/" + s;
   }
-
   try {
     const u = new URL(s);
-    if (
-      !u.pathname.endsWith("/") &&
-      !u.pathname.includes(".") &&
-      !u.search &&
-      !u.hash
-    ) {
+    if (!u.pathname.endsWith("/") && !u.pathname.includes(".") && !u.search && !u.hash) {
       u.pathname += "/";
     }
     return u.toString();
-  } catch {
-    return encodeURI(s);
-  }
+  } catch { return encodeURI(s); }
 }
 
 fetch("ean_adatbazis.json", { cache: "no-store" })
   .then((r) => (r.ok ? r.json() : {}))
   .then((obj) => { eanMap = buildEanMap(obj); })
-  .catch(() => { });
-
-function keresCikkszamSzerint() {
-  const q = norm(cikkszamInput.value.trim());
-  frissitTiltast();
-  if (!q) return;
-  renderTalalatok(
-    (cikkszam) => norm(cikkszam).includes(q),
-    "Nem található termék ezzel a cikkszám-részlettel."
-  );
-}
-
-function keresNevSzerint() {
-  const q = norm(termeknevInput.value.trim());
-  frissitTiltast();
-  if (!q) return;
-  renderTalalatok(
-    (_, adat) => norm(adat.termek).includes(q),
-    "Nem található termék ezzel a névrészlettel."
-  );
-}
+  .catch(() => {});
 
 function setEanStatus(cls, text) {
-  eanStatus.className = cls;
+  eanStatus.className = cls || "";
   eanStatus.textContent = text || "";
+}
+
+function isValidEAN13(str) {
+  const s = (str || "").replace(/\D/g, "");
+  if (s.length !== 13) return false;
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    const n = s.charCodeAt(i) - 48;
+    sum += (i % 2 === 0) ? n : n * 3;
+  }
+  const check = (10 - (sum % 10)) % 10;
+  return check === (s.charCodeAt(12) - 48);
 }
 
 function handleEan(raw) {
   const ean = (raw || "").replace(/\D/g, "");
-  if (ean.length !== 13) {
-    setEanStatus("err", "Az EAN-13 pontosan 13 számjegy.");
-    openLinkBtn.disabled = true;
-    openLinkBtn.dataset.href = "";
-    return;
-  }
-  if (!isValidEAN13(ean)) {
-    setEanStatus("err", "Érvénytelen EAN-13 (ellenőrzőszám hibás).");
-    openLinkBtn.disabled = true;
-    openLinkBtn.dataset.href = "";
-    return;
-  }
+  if (ean.length !== 13) { setEanStatus("err", "Az EAN-13 pontosan 13 számjegy."); openLinkBtn.disabled = true; openLinkBtn.dataset.href = ""; return; }
+  if (!isValidEAN13(ean)) { setEanStatus("err", "Érvénytelen EAN-13 (ellenőrzőszám hibás)."); openLinkBtn.disabled = true; openLinkBtn.dataset.href = ""; return; }
 
   const rawUrl = eanMap.get(ean);
   const href = normalizeProductUrl(rawUrl || "");
-
   if (rawUrl && /^https?:\/\//i.test(href)) {
     setEanStatus("ok", "Találat! A link megnyitható.");
-    openLinkBtn.disabled = false;
-    openLinkBtn.dataset.href = href;
+    openLinkBtn.disabled = false; openLinkBtn.dataset.href = href;
   } else if (rawUrl) {
     setEanStatus("warn", "Link formátum hibás az adatbázisban ehhez az EAN-hoz.");
-    openLinkBtn.disabled = true;
-    openLinkBtn.dataset.href = "";
+    openLinkBtn.disabled = true; openLinkBtn.dataset.href = "";
   } else {
     setEanStatus("warn", "Nincs hivatkozás ehhez az EAN-hoz az adatbázisban.");
-    openLinkBtn.disabled = true;
-    openLinkBtn.dataset.href = "";
+    openLinkBtn.disabled = true; openLinkBtn.dataset.href = "";
   }
 }
 
 if (eanInput) eanInput.addEventListener("input", (e) => handleEan(e.target.value));
+if (openLinkBtn) openLinkBtn.addEventListener("click", () => {
+  const href = openLinkBtn.dataset.href;
+  if (href) window.open(href, "_blank", "noopener,noreferrer");
+});
 
-if (openLinkBtn) {
-  openLinkBtn.addEventListener("click", () => {
-    const href = openLinkBtn.dataset.href;
-    if (href) window.open(href, "_blank", "noopener,noreferrer");
-  });
-}
+// ------- Kamera / Quagga -------
+const scannerEl = document.getElementById("scanner");
+const scanBtn = document.getElementById("scan-btn");
+const camControls = document.getElementById("cam-controls");
+const zoomSlider = document.getElementById("zoom-slider");
+const zoomInBtn  = document.getElementById("zoom-in");
+const zoomOutBtn = document.getElementById("zoom-out");
+const torchBtn   = document.getElementById("torch-btn");
+const exposureSlider = document.getElementById("exposure-slider");
 
-function setCamControlsActive(active) {
-  if (!camControls) return;
-  camControls.classList.toggle("active", !!active);
-}
+let scanning = false;
+let activeTrack = null;
+let videoElRef = null;
+let zoomSupported = false;
+let torchSupported = false;
+let exposureKind = null; // 'exposureCompensation' | 'brightness' | 'css'
+let torchOn = false;
+let uiBound = false;
 
-function applyZoom(val) {
+function setCamControlsActive(active){ camControls?.classList.toggle("active", !!active); }
+
+function applyZoom(val){
   if (!activeTrack) return;
-  activeTrack.applyConstraints({ advanced: [{ zoom: val }] }).catch(() => { });
+  activeTrack.applyConstraints({ advanced: [{ zoom: val }] }).catch(()=>{});
 }
 
-function applyExposure(val) {
+function applyExposure(val){
   if (!activeTrack) {
     if (exposureKind === "css" && videoElRef) videoElRef.style.filter = `brightness(${val})`;
     return;
   }
   if (exposureKind === "exposureCompensation") {
-    activeTrack.applyConstraints({ advanced: [{ exposureCompensation: val }] }).catch(() => { });
+    activeTrack.applyConstraints({ advanced: [{ exposureCompensation: val }] }).catch(()=>{});
   } else if (exposureKind === "brightness") {
-    activeTrack.applyConstraints({ advanced: [{ brightness: val }] }).catch(() => { });
+    activeTrack.applyConstraints({ advanced: [{ brightness: val }] }).catch(()=>{});
   } else if (exposureKind === "css" && videoElRef) {
     videoElRef.style.filter = `brightness(${val})`;
   }
 }
 
-function refocusNow() {
-  if (!activeTrack) return;
-  try {
-    const caps = activeTrack.getCapabilities ? activeTrack.getCapabilities() : {};
-    const fm = Array.isArray(caps.focusMode) ? caps.focusMode : (caps.focusMode ? [caps.focusMode] : []);
-    const prefer = fm.includes("continuous") ? "continuous" : (fm.includes("auto") ? "auto" : null);
-    if (prefer) activeTrack.applyConstraints({ advanced: [{ focusMode: prefer }] }).catch(() => { });
-  } catch { }
-}
-
-function toggleTorch() {
+function toggleTorch(){
   if (!activeTrack || !torchSupported) return;
   torchOn = !torchOn;
-  activeTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(() => { });
+  activeTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(()=>{});
   if (torchBtn) torchBtn.textContent = torchOn ? "Fény KI" : "Fény";
 }
 
-function ensureUIBound() {
+function ensureUIBound(){
   if (uiBound) return;
 
-  if (zoomSlider) zoomSlider.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
-  if (zoomInBtn) zoomInBtn.addEventListener("click", () => {
+  zoomSlider?.addEventListener("input", () => applyZoom(Number(zoomSlider.value)));
+  zoomInBtn?.addEventListener("click", () => {
     const v = Math.min(Number(zoomSlider.value) + Number(zoomSlider.step || 0.1), Number(zoomSlider.max || 1));
     zoomSlider.value = String(v); applyZoom(v);
   });
-  if (zoomOutBtn) zoomOutBtn.addEventListener("click", () => {
+  zoomOutBtn?.addEventListener("click", () => {
     const v = Math.max(Number(zoomSlider.value) - Number(zoomSlider.step || 0.1), Number(zoomSlider.min || 1));
     zoomSlider.value = String(v); applyZoom(v);
   });
-  if (refocusBtn) refocusBtn.addEventListener("click", refocusNow);
-  if (torchBtn) torchBtn.addEventListener("click", toggleTorch);
-  if (exposureSlider) exposureSlider.addEventListener("input", () => applyExposure(Number(exposureSlider.value)));
+  torchBtn?.addEventListener("click", toggleTorch);
+  exposureSlider?.addEventListener("input", () => applyExposure(Number(exposureSlider.value)));
 
+  // Pinch-to-zoom
   let startDist = 0, startZoom = 1;
   const dist = (t0, t1) => Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
   scannerEl.addEventListener("touchstart", (e) => {
     if (zoomSupported && e.touches.length === 2) {
-      startDist = dist(e.touches[0], e.touches[1]);
-      startZoom = Number(zoomSlider.value || 1);
+      startDist = dist(e.touches[0], e.touches[1]); startZoom = Number(zoomSlider.value || 1);
     }
   }, { passive: true });
   scannerEl.addEventListener("touchmove", (e) => {
@@ -281,54 +230,48 @@ function ensureUIBound() {
     }
   }, { passive: true });
 
-  scannerEl.addEventListener("click", refocusNow);
-
   uiBound = true;
 }
 
-function startScan() {
+function startScan(){
   if (scanning) return;
   if (!window.Quagga) { alert("A vonalkód olvasó könyvtár nem töltődött be."); return; }
 
   Quagga.init(
     {
       inputStream: {
-        name: "Live", type: "LiveStream", target: scannerEl,
-        constraints: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 }, advanced: [{ focusMode: "continuous" }] },
-        area: { top: "25%", right: "25%", left: "25%", bottom: "25%" }
+        name:"Live", type:"LiveStream", target: scannerEl,
+        constraints:{ facingMode:"environment", width:{ideal:1280}, height:{ideal:720}, advanced:[{ focusMode:"continuous" }]},
+        area:{ top:"25%", right:"25%", left:"25%", bottom:"25%" }
       },
-      decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader", "upc_e_reader"] },
-      locator: { patchSize: "large", halfSample: true }, locate: true,
+      decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","upc_reader","upc_e_reader"] },
+      locator:{ patchSize:"large", halfSample:true }, locate:true,
       numOfWorkers: navigator.hardwareConcurrency || 2
     },
-    (err) => {
+    (err)=>{
       if (err) { alert("Kamera hiba: " + err); return; }
       scannerEl.style.display = "block";
       Quagga.start();
-      scanning = true;
-      setCamControlsActive(true);
-      ensureUIBound();
+      scanning = true; setCamControlsActive(true); ensureUIBound();
 
       if (!scannerEl.querySelector(".scan-roi")) {
-        const roi = document.createElement("div");
-        roi.className = "scan-roi";
-        scannerEl.appendChild(roi);
+        const roi = document.createElement("div"); roi.className="scan-roi"; scannerEl.appendChild(roi);
       }
 
-      setTimeout(() => {
+      setTimeout(()=>{
         const video = scannerEl.querySelector("video");
         videoElRef = video || null;
         if (video) {
-          video.setAttribute("playsinline", "");
-          video.setAttribute("webkit-playsinline", "");
+          video.setAttribute("playsinline",""); video.setAttribute("webkit-playsinline","");
           video.muted = true; video.autoplay = true;
-          video.style.width = "100%"; video.style.height = "100%"; video.style.objectFit = "cover";
-          video.style.filter = "";
+          video.style.width = "100%"; video.style.height="100%"; video.style.objectFit="cover";
+          video.style.filter = ""; // reset CSS fényerő
         }
         const canvas = scannerEl.querySelector("canvas");
-        if (canvas) { canvas.style.width = "100%"; canvas.style.height = "100%"; }
+        if (canvas) { canvas.style.width="100%"; canvas.style.height="100%"; }
 
-        try {
+        // capability-k
+        try{
           const track = video && video.srcObject && video.srcObject.getVideoTracks()[0];
           if (!track) throw new Error("Nincs aktív videó track.");
           activeTrack = track;
@@ -336,6 +279,7 @@ function startScan() {
           const caps = track.getCapabilities ? track.getCapabilities() : {};
           const settings = track.getSettings ? track.getSettings() : {};
 
+          // ZOOM
           zoomSupported = !!(caps && caps.zoom !== undefined);
           if (zoomSupported) {
             const min = (caps.zoom?.min ?? 1), max = (caps.zoom?.max ?? 1), step = (caps.zoom?.step || 0.1);
@@ -344,14 +288,13 @@ function startScan() {
             zoomInBtn.disabled = false; zoomOutBtn.disabled = false;
           } else { zoomSlider.disabled = zoomInBtn.disabled = zoomOutBtn.disabled = true; }
 
-          focusModes = Array.isArray(caps.focusMode) ? caps.focusMode : (caps.focusMode ? [caps.focusMode] : []);
-          refocusBtn.disabled = !focusModes.length;
-
+          // TORCH
           torchSupported = !!caps.torch;
           torchOn = false;
           torchBtn.textContent = "Fény";
           torchBtn.disabled = !torchSupported;
 
+          // FÉNYERŐ / EXPO
           exposureKind = null;
           if (caps.exposureCompensation !== undefined) {
             exposureKind = "exposureCompensation";
@@ -369,42 +312,29 @@ function startScan() {
           }
         } catch {
           zoomSlider.disabled = zoomInBtn.disabled = zoomOutBtn.disabled = true;
-          refocusBtn.disabled = true; torchBtn.disabled = true; exposureSlider.disabled = true;
+          torchBtn.disabled = true; exposureSlider.disabled = true;
         }
       }, 0);
     }
   );
 }
 
-function stopScan() {
+function stopScan(){
   if (!scanning) return;
   Quagga.stop();
   scannerEl.style.display = "none";
   scanning = false;
 
   setCamControlsActive(false);
-  [zoomSlider, zoomInBtn, zoomOutBtn, refocusBtn, torchBtn, exposureSlider].forEach(el => { if (el) el.disabled = true; });
+  [zoomSlider, zoomInBtn, zoomOutBtn, torchBtn, exposureSlider].forEach(el => { if (el) el.disabled = true; });
   torchOn = false; torchBtn.textContent = "Fény";
   if (videoElRef) videoElRef.style.filter = "";
 
-  activeTrack = null; videoElRef = null;
-  zoomSupported = false; torchSupported = false; focusModes = []; exposureKind = null;
+  activeTrack = null; videoElRef = null; zoomSupported = false; torchSupported = false; exposureKind = null;
 }
 
-const STABLE_HITS = 3;
-let recentHits = [];
-
-function isValidEAN13(str) {
-  const s = (str || "").replace(/\D/g, "");
-  if (s.length !== 13) return false;
-  let sum = 0;
-  for (let i = 0; i < 12; i++) {
-    const n = s.charCodeAt(i) - 48;
-    sum += (i % 2 === 0) ? n : n * 3;
-  }
-  const check = (10 - (sum % 10)) % 10;
-  return check === (s.charCodeAt(12) - 48);
-}
+// Vonalkód-felismerés
+const STABLE_HITS = 3; let recentHits = [];
 
 if (window.Quagga) {
   Quagga.onDetected(({ codeResult }) => {
@@ -412,10 +342,8 @@ if (window.Quagga) {
     const digits = (raw || "").replace(/\D/g, "");
     if (!digits || digits.length < 8) return;
 
-    recentHits.push(digits);
-    if (recentHits.length > STABLE_HITS) recentHits.shift();
-
-    const stable = recentHits.length === STABLE_HITS && recentHits.every((v) => v === digits);
+    recentHits.push(digits); if (recentHits.length > STABLE_HITS) recentHits.shift();
+    const stable = recentHits.length === STABLE_HITS && recentHits.every((v)=>v===digits);
     if (!stable) return;
 
     if (eanInput) eanInput.value = digits;
@@ -425,6 +353,4 @@ if (window.Quagga) {
   });
 }
 
-if (scanBtn) {
-  scanBtn.addEventListener("click", () => (scanning ? stopScan() : startScan()));
-}
+scanBtn?.addEventListener("click", () => (scanning ? stopScan() : startScan()));
