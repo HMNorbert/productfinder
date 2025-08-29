@@ -143,8 +143,8 @@ function handleEan(raw) {
   }
 }
 
-eanInput?.addEventListener("input", (e) => handleEan(e.target.value));
-openLinkBtn?.addEventListener("click", () => {
+if (eanInput) eanInput.addEventListener("input", (e) => handleEan(e.target.value));
+if (openLinkBtn) openLinkBtn.addEventListener("click", () => {
   const href = openLinkBtn.dataset.href;
   if (href) window.open(href, "_blank", "noopener,noreferrer");
 });
@@ -167,14 +167,7 @@ let exposureKind = null;
 let torchOn = false;
 let uiBound = false;
 
-function setCamControlsActive(active){
-  camControls?.classList.toggle("active", !!active);
-}
-
-function showScanner(visible){
-  scannerEl.style.display = visible ? "block" : "none";
-  scannerEl.setAttribute("aria-hidden", visible ? "false" : "true");
-}
+function setCamControlsActive(active){ camControls?.classList.toggle("active", !!active); }
 
 function applyZoom(val){
   if (!activeTrack) return;
@@ -253,7 +246,7 @@ function startScan(){
     },
     (err)=>{
       if (err) { alert("Kamera hiba: " + err); return; }
-      showScanner(true);
+      scannerEl.style.display = "block";
       Quagga.start();
       scanning = true; setCamControlsActive(true); ensureUIBound();
 
@@ -321,7 +314,7 @@ function startScan(){
 function stopScan(){
   if (!scanning) return;
   Quagga.stop();
-  showScanner(false);
+  scannerEl.style.display = "none";
   scanning = false;
 
   setCamControlsActive(false);
