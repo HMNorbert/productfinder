@@ -251,6 +251,7 @@ function startScan(){
     },
     (err)=>{
       if (err) { alert("Kamera hiba: " + err); return; }
+      setCameraVisible(true);
       scannerEl.style.display = "block";
       Quagga.start();
       scanning = true; setCamControlsActive(true); ensureUIBound();
