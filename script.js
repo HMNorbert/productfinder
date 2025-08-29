@@ -1,4 +1,3 @@
-// ------- Keresés és megjelenítés -------
 const cikkszamInput = document.getElementById("cikkszam");
 const termeknevInput = document.getElementById("termeknev");
 const tablaBody = document.getElementById("tabla-body");
@@ -52,7 +51,6 @@ function keresNevSzerint() {
   renderTalalatok((_, a) => norm(a.termek).includes(q), "Nem található termék ezzel a névrészlettel.");
 }
 
-// ------- EAN és linkkezelés -------
 const eanInput = document.getElementById("ean");
 const openLinkBtn = document.getElementById("open-link-btn");
 const eanStatus = document.getElementById("ean-status");
@@ -151,7 +149,6 @@ if (openLinkBtn) openLinkBtn.addEventListener("click", () => {
   if (href) window.open(href, "_blank", "noopener,noreferrer");
 });
 
-// ------- Kamera / Quagga -------
 const scannerEl = document.getElementById("scanner");
 const scanBtn = document.getElementById("scan-btn");
 const camControls = document.getElementById("cam-controls");
@@ -166,7 +163,7 @@ let activeTrack = null;
 let videoElRef = null;
 let zoomSupported = false;
 let torchSupported = false;
-let exposureKind = null; // 'exposureCompensation' | 'brightness' | 'css'
+let exposureKind = null;
 let torchOn = false;
 let uiBound = false;
 
@@ -213,7 +210,6 @@ function ensureUIBound(){
   torchBtn?.addEventListener("click", toggleTorch);
   exposureSlider?.addEventListener("input", () => applyExposure(Number(exposureSlider.value)));
 
-  // Pinch-to-zoom
   let startDist = 0, startZoom = 1;
   const dist = (t0, t1) => Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY);
   scannerEl.addEventListener("touchstart", (e) => {
@@ -265,12 +261,11 @@ function startScan(){
           video.setAttribute("playsinline",""); video.setAttribute("webkit-playsinline","");
           video.muted = true; video.autoplay = true;
           video.style.width = "100%"; video.style.height="100%"; video.style.objectFit="cover";
-          video.style.filter = ""; // reset CSS fényerő
+          video.style.filter = "";
         }
         const canvas = scannerEl.querySelector("canvas");
         if (canvas) { canvas.style.width="100%"; canvas.style.height="100%"; }
 
-        // capability-k
         try{
           const track = video && video.srcObject && video.srcObject.getVideoTracks()[0];
           if (!track) throw new Error("Nincs aktív videó track.");
@@ -279,7 +274,6 @@ function startScan(){
           const caps = track.getCapabilities ? track.getCapabilities() : {};
           const settings = track.getSettings ? track.getSettings() : {};
 
-          // ZOOM
           zoomSupported = !!(caps && caps.zoom !== undefined);
           if (zoomSupported) {
             const min = (caps.zoom?.min ?? 1), max = (caps.zoom?.max ?? 1), step = (caps.zoom?.step || 0.1);
@@ -288,13 +282,11 @@ function startScan(){
             zoomInBtn.disabled = false; zoomOutBtn.disabled = false;
           } else { zoomSlider.disabled = zoomInBtn.disabled = zoomOutBtn.disabled = true; }
 
-          // TORCH
           torchSupported = !!caps.torch;
           torchOn = false;
           torchBtn.textContent = "Fény";
           torchBtn.disabled = !torchSupported;
 
-          // FÉNYERŐ / EXPO
           exposureKind = null;
           if (caps.exposureCompensation !== undefined) {
             exposureKind = "exposureCompensation";
@@ -333,7 +325,6 @@ function stopScan(){
   activeTrack = null; videoElRef = null; zoomSupported = false; torchSupported = false; exposureKind = null;
 }
 
-// Vonalkód-felismerés
 const STABLE_HITS = 3; let recentHits = [];
 
 if (window.Quagga) {
