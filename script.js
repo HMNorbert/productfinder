@@ -192,7 +192,7 @@ function toggleTorch(){
   if (!activeTrack || !torchSupported) return;
   torchOn = !torchOn;
   activeTrack.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(()=>{});
-  if (torchBtn) torchBtn.textContent = torchOn ? "Fény KI" : "Fény";
+  if (torchBtn) torchBtn.textContent = torchOn ? "Vaku KI" : "Vaku";
 }
 
 function ensureUIBound(){
@@ -237,7 +237,7 @@ function startScan(){
     {
       inputStream: {
         name:"Live", type:"LiveStream", target: scannerEl,
-        constraints:{ facingMode:"environment", width:{ideal:1280}, height:{ideal:720}, advanced:[{ focusMode:"continuous" }]},
+        constraints:{ facingMode:"environment", advanced:[{ focusMode:"continuous" }]},
         area:{ top:"25%", right:"25%", left:"25%", bottom:"25%" }
       },
       decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","upc_reader","upc_e_reader"] },
