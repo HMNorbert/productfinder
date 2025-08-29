@@ -161,7 +161,6 @@
     }
 
     #scanner {
-      display: none;
       position: relative;
       width: 100%;
       aspect-ratio: 16/10;
@@ -221,6 +220,14 @@
       background: #f9fafb
     }
 
+    #scanner video,
+    #scanner canvas {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+      display: block;
+    }
+
     th,
     td {
       padding: 10px 12px;
@@ -231,6 +238,14 @@
 
     tbody tr:nth-child(2n) {
       background: #fbfdff
+    }
+
+    #camera-card {
+      display: none;
+    }
+
+    #camera-card.active {
+      display: block;
     }
   </style>
 </head>
@@ -263,7 +278,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" id="camera-card">
       <div class="content">
         <div id="scanner"></div>
 
