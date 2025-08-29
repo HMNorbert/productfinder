@@ -157,6 +157,11 @@ const zoomInBtn  = document.getElementById("zoom-in");
 const zoomOutBtn = document.getElementById("zoom-out");
 const torchBtn   = document.getElementById("torch-btn");
 const exposureSlider = document.getElementById("exposure-slider");
+const cameraCard = document.getElementById("camera-card");
+function setCameraVisible(v) {
+  cameraCard?.classList.toggle("active", !!v);
+}
+
 
 let scanning = false;
 let activeTrack = null;
@@ -237,7 +242,7 @@ function startScan(){
     {
       inputStream: {
         name:"Live", type:"LiveStream", target: scannerEl,
-        constraints:{ facingMode:"environment", advanced:[{ focusMode:"continuous" }]},
+        constraints:{ facingMode:"environment", width:{ideal:1280}, height:{ideal:720}, advanced:[{ focusMode:"continuous" }]},
         area:{ top:"25%", right:"25%", left:"25%", bottom:"25%" }
       },
       decoder:{ readers:["ean_reader","ean_8_reader","code_128_reader","upc_reader","upc_e_reader"] },
@@ -314,16 +319,17 @@ function startScan(){
 function stopScan(){
   if (!scanning) return;
   Quagga.stop();
-  scannerEl.style.display = "none";
+  setCameraVisible(false);
   scanning = false;
 
   setCamControlsActive(false);
   [zoomSlider, zoomInBtn, zoomOutBtn, torchBtn, exposureSlider].forEach(el => { if (el) el.disabled = true; });
-  torchOn = false; torchBtn.textContent = "Fény";
+  torchOn = false; torchBtn.textContent = "Vaku";
   if (videoElRef) videoElRef.style.filter = "";
 
   activeTrack = null; videoElRef = null; zoomSupported = false; torchSupported = false; exposureKind = null;
 }
+
 
 const STABLE_HITS = 3; let recentHits = [];
 
