@@ -290,7 +290,7 @@ function startScan(){
 
           torchSupported = !!caps.torch;
           torchOn = false;
-          torchBtn.textContent = "Fény";
+          torchBtn.textContent = "Vaku";
           torchBtn.disabled = !torchSupported;
 
           exposureKind = null;
