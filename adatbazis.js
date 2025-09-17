@@ -7501,7 +7501,7 @@ const adatbazis = {
 "WH-UDZ09KE5/WH-SDC0309K3E5": { termek: "Panasonic Aquarea High-Performance KIT-WC09K3E5 1 fázisú osztott hőszivattyú 9 kW" },
 "E110": { termek: "Szigetelt (PA6.6) érvéghüvely, ónozott elektrolitréz, sárga 1mm2, L=18,4mm" },
 "E080": { termek: "Szigetelt (PA6.6) érvéghüvely, ónozott elektrolitréz, sárga 1mm2, L=12,4mm" },
-"1/4"menetes": { termek: "1/4 menetes hűtőközeg szárítószűrő" },
+"1/4menetes": { termek: "1/4 menetes hűtőközeg szárítószűrő" },
 "EWH50SIEEC": { termek: "Electrolux EWH50SIEEC Elektromos vízmelegítő 50l (Fehér)" },
 "EWH80SIEEC": { termek: "Electrolux EWH80SIEEC Elektromos vízmelegítő 80l (Fehér)" },
 "EWH100SIEEC": { termek: "Electrolux EWH100SIEEC Elektromos vízmelegítő 100l (Fehér)" },
