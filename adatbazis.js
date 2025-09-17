@@ -3219,9 +3219,9 @@ const adatbazis = {
 "116.014.21.1": { termek: "Geberit Tango pneumatikus vizelde vezérlés (Fényes Króm)" },
 "116.014.46.1": { termek: "Geberit Tango pneumatikus vizelde vezérlés (Matt Króm)" },
 "116.015.KH.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (fényes króm / matt króm / fényes króm)" },
-"""116.015.KJ.1"": { termek: ""Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / fényes króm / fehér)"" },"
+"116.015.KJ.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / fényes króm / fehér)" },"
 "116.015.KK.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (fehér / aranyozott / fehér)" },
-"""116.015.KL.1"": { termek: ""Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / matt króm / matt króm)"" },"
+"116.015.KL.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (	fehér / matt króm / matt króm)" },"
 "116.015.KM.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (fekete / fényes króm / fekete)" },
 "116.015.KN.1": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (matt króm / fényes króm / matt króm)" },
 "116.016.11.5": { termek: "Geberit Sigma10 pneumatikus vizelde vezérlés (alpin fehér)" },
@@ -6185,7 +6185,7 @@ const adatbazis = {
 "KRÉZH16": { termek: "Klíma rézcső hollander castel 5/8-16 mm" },
 "7738112544": { termek: "Bosch FC-Set80-C93x Függőleges elvezető készlet" },
 "AR09TXCACWKXEE": { termek: "Samsung Nordic WindFree™ Geo 2,5 Kw Single kültéri egység" },
-"""AR12TXCACWKXEE"": { termek: ""Samsung Nordic WindFree™ Geo 3,5 kW	 Single kültéri egység"" },"
+"AR12TXCACWKXEE": { termek: "Samsung Nordic WindFree™ Geo 3,5 kW	 Single kültéri egység" },"
 "AR09TXFYBWKXEE": { termek: "Samsung Nordic Geo AR09TXFYBWKXEE 2,5 Kw Single kültéri egység" },
 "AR12TXFYBWKXEE": { termek: "Samsung Nordic Geo AR12TXFYBWKXEE 3,5 kw Single kültéri egység" },
 "4058448039195": { termek: "Blauberg WHM 100 DK" },
