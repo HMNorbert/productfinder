@@ -74,6 +74,17 @@
       .grid-2 {
         grid-template-columns: 1fr
       }
+
+      .app {
+        margin: 16px auto;
+        padding: 0 10px
+      }
+
+      th,
+      td {
+        white-space: normal;
+        word-break: break-word
+      }
     }
 
     label {
@@ -162,11 +173,13 @@
 
     #scanner {
       position: relative;
-      width: 100%;
+      width: 100% !important;
+      max-width: 100vw;
       aspect-ratio: 16/10;
       border-radius: 14px;
       overflow: hidden;
       background: #000;
+      margin: 0 auto;
     }
 
     .scan-roi {
