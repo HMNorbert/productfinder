@@ -41,6 +41,7 @@
         radial-gradient(1000px 800px at 10% -10%, var(--bg-accent) 0, transparent 60%),
         radial-gradient(900px 700px at 120% 0%, #fef3c7 0, transparent 50%),
         var(--bg);
+      overflow-x: hidden;
     }
 
     .app {
@@ -78,12 +79,6 @@
       .app {
         margin: 16px auto;
         padding: 0 10px
-      }
-
-      th,
-      td {
-        white-space: normal;
-        word-break: break-word
       }
     }
 
@@ -245,8 +240,9 @@
     td {
       padding: 10px 12px;
       border-bottom: 1px solid #edf0f3;
-      white-space: nowrap;
-      text-align: left
+      text-align: left;
+      white-space: normal;
+      word-break: break-word;
     }
 
     tbody tr:nth-child(2n) {
