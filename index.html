@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="hu">
+
 <head>
   <meta charset="UTF-8" />
   <title>Terméknév kereső</title>
@@ -24,12 +25,12 @@
     }
 
     * {
-      box-sizing: border-box;
+      box-sizing: border-box
     }
 
     html,
     body {
-      height: 100%;
+      height: 100%
     }
 
     body {
@@ -40,15 +41,13 @@
         radial-gradient(1000px 800px at 10% -10%, var(--bg-accent) 0, transparent 60%),
         radial-gradient(900px 700px at 120% 0%, #fef3c7 0, transparent 50%),
         var(--bg);
-      overflow-x: hidden;
     }
 
     .app {
-      max-width: 960px;
       margin: 32px auto;
       padding: 0 18px;
       display: grid;
-      gap: 18px;
+      gap: 18px
     }
 
     .card {
@@ -59,26 +58,21 @@
     }
 
     .content {
-      padding: 18px;
+      padding: 18px
     }
 
     .grid {
       display: grid;
-      gap: 14px;
+      gap: 14px
     }
 
     .grid-2 {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr
     }
 
     @media (max-width: 720px) {
       .grid-2 {
-        grid-template-columns: 1fr;
-      }
-
-      .app {
-        margin: 16px auto;
-        padding: 0 10px;
+        grid-template-columns: 1fr
       }
     }
 
@@ -86,7 +80,7 @@
       display: block;
       font-size: 12px;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 6px
     }
 
     input[type="text"] {
@@ -100,13 +94,13 @@
     }
 
     input[type="text"]::placeholder {
-      color: #94a3b8;
+      color: #94a3b8
     }
 
     input[type="text"]:focus {
       outline: none;
       border-color: #c7d2fe;
-      box-shadow: 0 0 0 4px #e0e7ff;
+      box-shadow: 0 0 0 4px #e0e7ff
     }
 
     .btn-row {
@@ -114,7 +108,7 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 8px
     }
 
     button {
@@ -129,52 +123,56 @@
     }
 
     button:hover {
-      filter: brightness(1.05);
+      filter: brightness(1.05)
     }
 
     button:active {
-      transform: translateY(1px);
+      transform: translateY(1px)
     }
 
     button[disabled] {
       opacity: .55;
       filter: none;
       cursor: not-allowed;
-      box-shadow: none;
+      box-shadow: none
     }
 
     .muted {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 13px
     }
 
     #ean-status {
       min-height: 22px;
       font-size: 13px;
-      margin-top: 6px;
+      margin-top: 6px
     }
 
     #ean-status.ok {
-      color: var(--success);
+      color: var(--success)
     }
 
     #ean-status.warn {
-      color: var(--warning);
+      color: var(--warning)
     }
 
     #ean-status.err {
-      color: var(--danger);
+      color: var(--danger)
+    }
+
+    #ocr-status {
+      min-height: 22px;
+      font-size: 13px;
+      margin-top: 6px;
     }
 
     #scanner {
       position: relative;
       width: 100%;
-      max-width: 100%;
       aspect-ratio: 16/10;
       border-radius: 14px;
       overflow: hidden;
       background: #000;
-      margin: 0 auto;
     }
 
     .scan-roi {
@@ -189,19 +187,11 @@
       display: none;
       align-items: center;
       gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
+      margin-top: 10px
     }
 
     .cam-controls.active {
-      display: flex;
-    }
-
-    #zoom-slider,
-    #exposure-slider {
-      flex: 1 1 140px;
-      min-width: 120px;
-      max-width: 100%;
+      display: flex
     }
 
     input[type="range"] {
@@ -209,30 +199,31 @@
       height: 4px;
       background: linear-gradient(90deg, var(--primary-weak), #fff);
       border-radius: 999px;
+      width: 180px;
     }
 
     .table-wrap {
       border: 1px solid var(--border);
       border-radius: 12px;
-      overflow: hidden;
+      overflow: hidden
     }
 
     .table-scroll {
       max-height: 420px;
-      overflow: auto;
+      overflow: auto
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 14px
     }
 
     thead {
       position: sticky;
       top: 0;
       z-index: 1;
-      background: #f9fafb;
+      background: #f9fafb
     }
 
     #scanner video,
@@ -247,13 +238,12 @@
     td {
       padding: 10px 12px;
       border-bottom: 1px solid #edf0f3;
-      text-align: left;
-      white-space: normal;
-      word-break: break-word;
+      white-space: nowrap;
+      text-align: left
     }
 
     tbody tr:nth-child(2n) {
-      background: #fbfdff;
+      background: #fbfdff
     }
 
     #camera-card {
@@ -265,6 +255,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <section class="card">
@@ -289,7 +280,10 @@
         <div class="btn-row">
           <button type="button" id="scan-btn">Vonalkód olvasása</button>
           <button type="button" id="open-link-btn" disabled>Link megnyitása</button>
+          <button type="button" id="scan-text-btn">Cikkszám szkennelése</button>
         </div>
+        <input type="file" id="cikkszam-image-input" accept="image/*" capture="environment" style="display:none" />
+        <div id="ocr-status" class="muted"></div>
       </div>
     </section>
 
@@ -301,7 +295,9 @@
           <input type="range" id="zoom-slider" min="1" max="1" step="0.1" value="1" disabled title="Zoom">
           <button type="button" id="zoom-out" disabled title="Zoom –">–</button>
           <button type="button" id="zoom-in" disabled title="Zoom +">+</button>
+
           <button type="button" id="torch-btn" disabled title="Zseblámpa">Vaku</button>
+
           <span class="muted">Fényerő</span>
           <input type="range" id="exposure-slider" min="0.6" max="1.6" step="0.05" value="1.0" disabled title="Fényerő">
         </div>
@@ -325,10 +321,13 @@
         </div>
       </div>
     </section>
+
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="adatbazis.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
