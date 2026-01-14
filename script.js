@@ -5,6 +5,25 @@ const tablaBody = document.getElementById("tabla-body");
 const norm = (s) => (s || "").toString()
   .normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
+function escapeHtml(str) {
+  return (str ?? "").toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeHref(raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+  if (!/^https?:\/\//i.test(s)) {
+    if (s.startsWith("/")) s = "https://www.meleget.hu" + s;
+    else s = "https://www.meleget.hu/" + s;
+  }
+  return /^https?:\/\//i.test(s) ? s : "";
+}
+
 function renderTalalatok(filterFn, uzenetHaUres) {
   tablaBody.innerHTML = "";
   let talalatok = 0;
@@ -13,7 +32,11 @@ function renderTalalatok(filterFn, uzenetHaUres) {
     try {
       if (!filterFn(cikkszam, adat)) continue;
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${cikkszam}</td><td>${adat.termek}</td>`;
+      const href = safeHref(adat.url);
+      const nameHtml = href
+        ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${escapeHtml(adat.termek)}</a>`
+        : `${escapeHtml(adat.termek)}`;
+      tr.innerHTML = `<td>${escapeHtml(cikkszam)}</td><td>${nameHtml}</td>`;
       tablaBody.appendChild(tr);
       talalatok++;
     } catch {}
